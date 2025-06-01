@@ -1,6 +1,6 @@
-import React from 'react'
-import LinePlot from './LinePlot'
-import TimelineR3F from './TimeLinePoints'
+
+import LinePlot from './plot/LinePlot'
+
 
 
 const Experience = () => {
