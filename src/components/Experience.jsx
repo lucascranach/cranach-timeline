@@ -1,13 +1,11 @@
+import LinePlot from "./plot/LinePlot"
+import Scene from "./three/Scene"
 
-import LinePlot from './plot/LinePlot'
-
-
-
-const Experience = () => {
+const Experience = (props) => {
   return (
-    
     <>
-      <LinePlot />
+      <LinePlot results={props.results || []} />
+      {/* <Scene results={props.results || []} /> */}
     </>
   )
 }
