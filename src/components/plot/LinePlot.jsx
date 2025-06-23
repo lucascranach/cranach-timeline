@@ -22,23 +22,34 @@ function ResultsThumbnails({ results, x, marginTop, height, marginBottom, transf
     return acc
   }, {})
 
+  const thumbSize = 24
+  const thumbGap = 2
+
   return (
     <g>
-      {Object.entries(groupedByYear).map(([year, items]) => {
-        const xPos = transform.applyX(x(new Date(Number(year), 0, 1)))
-        return items.map((item, i) => (
-          <image
-            key={item.img_src || i}
-            href={item.img_src ? item.img_src.replace(/-s(\.\w+)$/, "-xs$1") : undefined}
-            x={xPos - 18}
-            y={height - marginBottom - 36 - i * 40}
-            width={36}
-            height={36}
-            style={{ cursor: "pointer" }}
-          >
-            <title>{item.title}</title>
-          </image>
-        ))
+      {Object.entries(groupedByYear).map(([year, items], yearIdx) => {
+        // Increase this value for a bigger gap between years:
+        const yearGap = 0
+        const xPos = transform.applyX(x(new Date(Number(year), 0, 1))) + yearIdx * yearGap
+        const colCount = 3
+        const rows = Math.ceil(items.length / colCount)
+        return items.map((item, i) => {
+          const col = i % colCount
+          const row = Math.floor(i / colCount)
+          return (
+            <image
+              key={item.img_src || i}
+              href={item.img_src ? item.img_src.replace(/-s(\.\w+)$/, "-xs$1") : undefined}
+              x={xPos - thumbSize + col * (thumbSize + thumbGap)}
+              y={height - marginBottom - thumbSize - row * (thumbSize + thumbGap)}
+              width={thumbSize}
+              height={thumbSize}
+              style={{ cursor: "pointer" }}
+            >
+              <title>{item.title}</title>
+            </image>
+          )
+        })
       })}
     </g>
   )
@@ -54,7 +65,7 @@ export default function LinePlot({
   onlyShowLabeledStripes = true,
   results = [],
 }) {
-  // Load all event data
+  // Load all event xPos
   const elder = useAtomValue(cranachElderEvents) || []
   const younger = useAtomValue(cranachYoungerEvents) || []
   const luther = useAtomValue(lutherEvents) || []
@@ -176,10 +187,10 @@ export default function LinePlot({
           height: "100%",
           display: "block",
           cursor: "grab",
-          background: "#fff",
+          // background: "#000",
         }}
       >
-        <DecadeStripes
+        {/* <DecadeStripes
           visibleX={visibleX}
           marginLeft={marginLeft}
           marginRight={marginRight}
@@ -190,7 +201,7 @@ export default function LinePlot({
           tickYears={tickYears}
           startYear={startYear}
           endYear={endYear}
-        />
+        /> */}
         <g ref={gx} transform={`translate(0,${height - marginBottom})`} />
         <g ref={gy} transform={`translate(${marginLeft},0)`} />
         <EventPoints

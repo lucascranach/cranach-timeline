@@ -11,5 +11,6 @@ body,
 
   background: #3f3f3f;
   background: #255982;
-  background: #898989;
+  background: #000;
+  color: #fff; /* Add this line */
 }
