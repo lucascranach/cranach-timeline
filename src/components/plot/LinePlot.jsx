@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from "react"
 import * as d3 from "d3"
 import { useAtomValue } from "jotai"
+import { useControls } from "leva"
 import { cranachElderEvents, cranachYoungerEvents, lutherEvents, historyEvents } from "../../store/atoms"
 import { EVENT_TYPES } from "./eventTypes"
 import DecadeStripes from "./DecadeStripes"
@@ -8,7 +9,19 @@ import EventPoints from "./EventPoints"
 import Legend from "./Legend"
 import Popup from "./Popup"
 
-function ResultsThumbnails({ results, x, marginTop, height, marginBottom, transform }) {
+function ResultsThumbnails({
+  results,
+  x,
+  marginTop,
+  height,
+  marginBottom,
+  transform,
+  thumbWidth,
+  thumbHeight,
+  thumbGap,
+  colCount,
+  yearGap,
+}) {
   if (!results || !results.length) return null
 
   // Group results by year
@@ -22,16 +35,10 @@ function ResultsThumbnails({ results, x, marginTop, height, marginBottom, transf
     return acc
   }, {})
 
-  const thumbSize = 24
-  const thumbGap = 2
-
   return (
     <g>
       {Object.entries(groupedByYear).map(([year, items], yearIdx) => {
-        // Increase this value for a bigger gap between years:
-        const yearGap = 0
         const xPos = transform.applyX(x(new Date(Number(year), 0, 1))) + yearIdx * yearGap
-        const colCount = 3
         const rows = Math.ceil(items.length / colCount)
         return items.map((item, i) => {
           const col = i % colCount
@@ -40,11 +47,12 @@ function ResultsThumbnails({ results, x, marginTop, height, marginBottom, transf
             <image
               key={item.img_src || i}
               href={item.img_src ? item.img_src.replace(/-s(\.\w+)$/, "-xs$1") : undefined}
-              x={xPos - thumbSize + col * (thumbSize + thumbGap)}
-              y={height - marginBottom - thumbSize - row * (thumbSize + thumbGap)}
-              width={thumbSize}
-              height={thumbSize}
+              x={xPos - thumbWidth + col * (thumbWidth + thumbGap)}
+              y={height - marginBottom - thumbHeight - row * (thumbHeight + thumbGap)}
+              width={thumbWidth}
+              height={thumbHeight}
               style={{ cursor: "pointer" }}
+              preserveAspectRatio="xMidYMid slice"
             >
               <title>{item.title}</title>
             </image>
@@ -60,7 +68,7 @@ export default function LinePlot({
   height = window.innerHeight,
   marginTop = 40,
   marginRight = 40,
-  marginBottom = 120, // Increased to leave space for events below
+  marginBottom = 120,
   marginLeft = 60,
   onlyShowLabeledStripes = true,
   results = [],
@@ -176,6 +184,20 @@ export default function LinePlot({
     return () => document.removeEventListener("mousedown", handleClick)
   }, [popup])
 
+  // Leva controls for adjustable variables
+  const { thumbWidth, thumbHeight, thumbGap, colCount, yearGap, eventBaseBelow, eventSpacing } = useControls(
+    "Thumbnails & Events",
+    {
+      thumbWidth: { value: 32, min: 8, max: 64, step: 1, label: " Width" },
+      thumbHeight: { value: 16, min: 8, max: 64, step: 1, label: " Height" },
+      thumbGap: { value: 2, min: 0, max: 16, step: 1, label: "Thumb Gap" },
+      colCount: { value: 3, min: 1, max: 10, step: 1, label: "Thumb Columns" },
+      yearGap: { value: 0, min: 0, max: 500, step: 1, label: "Year Gap" },
+      eventBaseBelow: { value: 24, min: 0, max: 100, step: 1, label: "Event Base Below" },
+      eventSpacing: { value: 24, min: 0, max: 100, step: 1, label: "Event Spacing" },
+    }
+  )
+
   return (
     <>
       <svg
@@ -187,7 +209,6 @@ export default function LinePlot({
           height: "100%",
           display: "block",
           cursor: "grab",
-          // background: "#000",
         }}
       >
         {/* <DecadeStripes
@@ -212,6 +233,8 @@ export default function LinePlot({
           setPopup={setPopup}
           height={height}
           marginBottom={marginBottom}
+          baseBelow={eventBaseBelow}
+          spacing={eventSpacing}
         />
         <ResultsThumbnails
           results={results}
@@ -220,6 +243,11 @@ export default function LinePlot({
           height={height}
           marginBottom={marginBottom}
           transform={transform}
+          thumbWidth={thumbWidth}
+          thumbHeight={thumbHeight}
+          thumbGap={thumbGap}
+          colCount={colCount}
+          yearGap={yearGap}
         />
         <Legend marginLeft={marginLeft} marginTop={marginTop} />
       </svg>
