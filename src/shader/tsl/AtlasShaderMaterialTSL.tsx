@@ -18,9 +18,6 @@ export const AtlasShaderMaterialTSL = (atlasTexture: THREE.Texture, cropSettings
   // This will be set per instance via the geometry's instance attribute
   const uvOffset = TSL.attribute("uvOffset", "vec4")
 
-  // Get the aspect ratio for this instance to scale the geometry correctly
-  const aspectRatio = TSL.attribute("aspectRatio", "float")
-
   // Apply UV transformations for cropping
   // The uvOffset already contains the cropped UV coordinates from the geometry
   const atlasUV = TSL.mix(

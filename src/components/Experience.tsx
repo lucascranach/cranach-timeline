@@ -13,21 +13,20 @@ const Atlas = () => {
   const atlasTexture = useLoader(THREE.TextureLoader, "/texture-atlas.webp")
 
   // Leva controls for thumbnail sizing and cropping
-  const { thumbnailWidth, thumbnailHeight, cropMode, cropOffsetX, cropOffsetY, cropScale } = useControls(
-    "Thumbnail Settings",
-    {
+  const { thumbnailWidth, thumbnailHeight, cropMode, cropOffsetX, cropOffsetY, cropScale, preserveAspectRatio } =
+    useControls("Thumbnail Settings", {
       thumbnailWidth: { value: 1, min: 0.1, max: 3, step: 0.1, label: "Width" },
       thumbnailHeight: { value: 1, min: 0.1, max: 3, step: 0.1, label: "Height" },
+      preserveAspectRatio: { value: true, label: "Preserve Aspect Ratio" },
       cropMode: {
-        value: "fill",
+        value: "fit",
         options: ["fit", "fill", "custom"],
         label: "Crop Mode",
       },
       cropOffsetX: { value: 0, min: -1, max: 1, step: 0.01, label: "Crop Offset X" },
       cropOffsetY: { value: 0, min: -1, max: 1, step: 0.01, label: "Crop Offset Y" },
       cropScale: { value: 1, min: 0.1, max: 2, step: 0.01, label: "Crop Scale" },
-    }
-  )
+    })
 
   // Load atlas data
   useEffect(() => {
@@ -51,20 +50,12 @@ const Atlas = () => {
     return AtlasShaderMaterialTSL(atlasTexture, cropSettings)
   }, [atlasTexture, atlasData, cropMode, cropOffsetX, cropOffsetY, cropScale])
 
-  // Create geometry with UV offset attributes and cropping
+  // Create geometry with UV offset attributes and correct aspect ratios
   const geometryWithAttributes = useMemo(() => {
     if (!atlasData) return null
 
-    // Use uniform dimensions for all thumbnails - no aspect ratio adjustment of the plane
-    const finalWidth = thumbnailWidth
-    const finalHeight = thumbnailHeight
-
-    // Create geometry with uniform dimensions - all thumbnails will be the same size
-    const geometry = new THREE.PlaneGeometry(finalWidth, finalHeight)
-
-    // Create UV offset data and aspect ratio data for each instance
+    // Create UV offset data for each instance
     const uvOffsets = new Float32Array(arr100.length * 4) // 4 values per instance (u1, v1, u2, v2)
-    const aspectRatios = new Float32Array(arr100.length) // 1 value per instance (width/height)
 
     arr100.forEach((i) => {
       if (atlasData.images && atlasData.images.length > 0) {
@@ -72,9 +63,10 @@ const Atlas = () => {
         const atlasWidth = atlasData.atlas.width
         const atlasHeight = atlasData.atlas.height
 
-        // Calculate aspect ratio from the actual image dimensions
-        const aspectRatio = imageData.width / imageData.height
-        aspectRatios[i] = aspectRatio
+        // Calculate actual image dimensions and aspect ratio
+        const imageWidth = imageData.width || 100 // fallback if width missing
+        const imageHeight = imageData.height || 100 // fallback if height missing
+        const aspectRatio = imageWidth / imageHeight
 
         // Calculate base UV coordinates
         let u1 = imageData.x / atlasWidth
@@ -84,22 +76,21 @@ const Atlas = () => {
 
         // Apply cropping based on crop mode
         if (cropMode === "fit") {
-          // Fit mode: show entire image, may have letterboxing
-          // No additional cropping needed, use full UV coordinates
+          // Fit mode: show entire image, preserve aspect ratio
+          // No UV cropping needed - the geometry scaling handles aspect ratio
         } else if (cropMode === "fill") {
-          // Fill mode: crop to fill the thumbnail dimensions
-          const imageAspect = aspectRatio
-          const thumbAspect = finalWidth / finalHeight
+          // Fill mode: crop to fill specified thumbnail dimensions
+          const thumbAspect = thumbnailWidth / thumbnailHeight
 
-          if (imageAspect > thumbAspect) {
-            // Image is wider than thumbnail, crop horizontally
-            const cropAmount = (1 - thumbAspect / imageAspect) * 0.5
+          if (aspectRatio > thumbAspect) {
+            // Image is wider, crop horizontally
+            const cropAmount = (1 - thumbAspect / aspectRatio) * 0.5
             const uvWidth = u2 - u1
             u1 += cropAmount * uvWidth
             u2 -= cropAmount * uvWidth
           } else {
-            // Image is taller than thumbnail, crop vertically
-            const cropAmount = (1 - imageAspect / thumbAspect) * 0.5
+            // Image is taller, crop vertically
+            const cropAmount = (1 - aspectRatio / thumbAspect) * 0.5
             const uvHeight = v2 - v1
             v1 += cropAmount * uvHeight
             v2 -= cropAmount * uvHeight
@@ -135,10 +126,12 @@ const Atlas = () => {
       }
     })
 
+    // Create base geometry (unit plane that will be scaled per instance)
+    const geometry = new THREE.PlaneGeometry(1, 1)
     geometry.setAttribute("uvOffset", new THREE.InstancedBufferAttribute(uvOffsets, 4))
-    geometry.setAttribute("aspectRatio", new THREE.InstancedBufferAttribute(aspectRatios, 1))
+
     return geometry
-  }, [atlasData, arr100, thumbnailWidth, thumbnailHeight, cropMode, cropOffsetX, cropOffsetY, cropScale])
+  }, [atlasData, arr100, cropMode, cropOffsetX, cropOffsetY, cropScale, thumbnailWidth, thumbnailHeight])
 
   if (!atlasMaterial || !atlasData || !geometryWithAttributes) {
     return (
@@ -162,9 +155,40 @@ const Atlas = () => {
         <primitive object={geometryWithAttributes} attach="geometry" />
         <primitive object={atlasMaterial} attach="material" />
 
-        {arr100.map((i) => (
-          <Thumbnail key={i} position={[i, 0, 0]} />
-        ))}
+        {arr100.map((i) => {
+          if (!atlasData.images || atlasData.images.length === 0) {
+            return <Thumbnail key={i} position={[i, 0, 0]} />
+          }
+
+          const imageData = atlasData.images[i % atlasData.images.length]
+          const imageWidth = imageData.width || 100
+          const imageHeight = imageData.height || 100
+          const aspectRatio = imageWidth / imageHeight
+
+          // Calculate thumbnail dimensions based on settings
+          let finalWidth, finalHeight
+
+          if (preserveAspectRatio) {
+            // Preserve aspect ratio mode: scale to fit within specified dimensions
+            const targetAspect = thumbnailWidth / thumbnailHeight
+
+            if (aspectRatio > targetAspect) {
+              // Image is wider, scale by width
+              finalWidth = thumbnailWidth
+              finalHeight = thumbnailWidth / aspectRatio
+            } else {
+              // Image is taller, scale by height
+              finalHeight = thumbnailHeight
+              finalWidth = thumbnailHeight * aspectRatio
+            }
+          } else {
+            // Direct dimensions: use specified width and height (may distort aspect ratio)
+            finalWidth = thumbnailWidth
+            finalHeight = thumbnailHeight
+          }
+
+          return <Thumbnail key={i} position={[i, 0, 0]} scale={[finalWidth, finalHeight, 1]} />
+        })}
       </ThumbnailInstances>
     </>
   )
