@@ -1,10 +1,9 @@
+import { useRef, useEffect } from "react"
 import * as THREE from "three/webgpu"
 import * as TSL from "three/tsl"
-import { abs, Fn, If, positionLocal, rotateUV, time, vec2 } from "three/tsl"
-
 import { Canvas, extend, useFrame, useThree, type ThreeToJSXElements } from "@react-three/fiber"
 import { OrbitControls, PerspectiveCamera, useGLTF } from "@react-three/drei"
-import { useRef, useEffect } from "react"
+
 import Experience from "./Experience"
 
 declare module "@react-three/fiber" {
@@ -14,8 +13,6 @@ declare module "@react-three/fiber" {
 extend(THREE as any)
 
 const Scene = () => {
-  const meadowRef = useRef<THREE.Mesh>(null)
-
   return (
     <Canvas
       flat
