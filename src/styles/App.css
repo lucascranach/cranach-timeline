@@ -1,0 +1,35 @@
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #000;
+}
+
+/* #webgpu-canvas {
+  outline: 1px solid #fff;
+  ::after {
+    content: "WebGPU";
+    position: absolute;
+    top: 0;
+    left: 0;
+    color: #fff;
+    font-family: "Courier New", Courier, monospace;
+    padding: 0.5rem;
+    font-size: 1rem;
+    pointer-events: none; 
+  }
+}
+
+#webgl-canvas {
+  outline: 1px solid #fff;
+  ::after {
+    content: "WebGL";
+    position: absolute;
+    top: 0;
+    left: 0;
+    color: #fff;
+    font-family: "Courier New", Courier, monospace;
+    padding: 0.5rem;
+    font-size: 1rem;
+    pointer-events: none; 
+  }
+} */
