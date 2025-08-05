@@ -1,6 +1,4 @@
-import { Instances, Instance, createInstances } from "@react-three/drei"
-import AtlasManager from "./atlas/AtlasManager"
-import InstancedAtlasThumbnails from "./atlas/InstancedAtlasThumbnails"
+import { createInstances } from "@react-three/drei"
 
 const [ThumbnailInstances, Thumbnail] = createInstances()
 
