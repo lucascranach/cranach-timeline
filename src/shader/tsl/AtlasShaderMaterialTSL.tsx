@@ -17,6 +17,9 @@ export const AtlasShaderMaterialTSL = (atlasTexture: THREE.Texture) => {
   // This will be set per instance via the geometry's instance attribute
   const uvOffset = TSL.attribute("uvOffset", "vec4")
 
+  // Get the aspect ratio for this instance to scale the geometry correctly
+  const aspectRatio = TSL.attribute("aspectRatio", "float")
+
   // Map the fragment's UV coordinates (0-1) to the specific region in the atlas
   // uvOffset.xy = bottom-left corner (u1, v1)
   // uvOffset.zw = top-right corner (u2, v2)
@@ -29,9 +32,18 @@ export const AtlasShaderMaterialTSL = (atlasTexture: THREE.Texture) => {
   // Sample the color from the atlas at the calculated UV coordinates
   const sampledColor = atlasTextureNode.sample(atlasUV)
 
+  // Create vertex transformation that applies aspect ratio scaling
+  const position = TSL.positionLocal
+  const scaledPosition = TSL.vec3(
+    position.x.mul(aspectRatio), // Scale width by aspect ratio
+    position.y, // Keep height as is
+    position.z
+  )
+
   // Create the material with TSL nodes
   const material = new THREE.NodeMaterial()
   material.colorNode = sampledColor
+  material.positionNode = scaledPosition
   material.transparent = true
   material.alphaTest = 0.1 // Discard pixels with alpha < 0.1
   material.depthWrite = false
