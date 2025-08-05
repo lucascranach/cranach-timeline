@@ -32,7 +32,8 @@ const Scene = () => {
       shadows
     >
       <Experience />
-      <PerspectiveCamera makeDefault position={[0, 2, 0]} fov={50} />
+
+      <PerspectiveCamera makeDefault position={[0, 0, 20]} fov={50} />
       <OrbitControls />
       <ambientLight intensity={1} />
       {/* <directionalLight position={[5, 5, 5]} intensity={2} castShadow /> */}
