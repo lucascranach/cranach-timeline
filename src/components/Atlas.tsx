@@ -1,6 +1,7 @@
 import { useLoader } from "@react-three/fiber"
 import * as THREE from "three"
 import { AtlasShaderMaterialTSL } from "@/shader/tsl/AtlasShaderMaterialTSL"
+import { DecadeDiagonalBackground } from "@/shader/tsl/DecadeDiagonalShaderTSL"
 import { useMemo } from "react"
 import { useAtlasControls } from "@/hooks/useAtlasControls"
 import { useAtlasData } from "@/hooks/useAtlasData"
@@ -144,6 +145,17 @@ const Atlas = () => {
 
   return (
     <group>
+      {/* Vertical decade background */}
+      <DecadeDiagonalBackground
+        yearKeys={yearKeys}
+        yearPositions={yearPositions}
+        height={500} // Much larger height to extend stripes further at top and bottom
+        lineWidth={0.15}
+        opacity={0.4}
+        lineColor={new THREE.Color(0.25, 0.25, 0.3)}
+        backgroundColor={new THREE.Color("#18181a")} // Match the overall background color
+      />
+
       <group position={[0, -1, 0]}>
         <TimelineAxis
           yearKeys={yearKeys}
