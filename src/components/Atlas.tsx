@@ -1,4 +1,4 @@
-import { createInstances } from "@react-three/drei"
+import { createInstances, Text } from "@react-three/drei"
 import { useLoader } from "@react-three/fiber"
 import * as THREE from "three"
 import { AtlasShaderMaterialTSL } from "@/shader/tsl/AtlasShaderMaterialTSL"
@@ -187,7 +187,7 @@ const Atlas = () => {
           <meshStandardMaterial color="orange" />
           {sortedImages.map((imageData, i) => (
             <group key={imageData.filename || i}>
-              <Thumbnail position={[i * spacing, 0, 0]} onClick={() => handleThumbnailClick(i, imageData)} />
+              <Thumbnail position={[i * 2, 0, 0]} onClick={() => handleThumbnailClick(i, imageData)} />
             </group>
           ))}
         </ThumbnailInstances>
@@ -197,12 +197,16 @@ const Atlas = () => {
 
   // Create positioned instances for each year group
   const thumbnailInstances = []
+  const yearLabels = []
   let globalIndex = 0
 
   yearKeys.forEach((year) => {
     const yearItems = groupedByYear[year]
     const yearStartX = yearPositions[year]
     const rows = Math.ceil(yearItems.length / columnsPerYear)
+
+    // Track the lowest Y position for this year to position the year label
+    let minY = 0
 
     yearItems.forEach((imageData, itemIndex) => {
       const row = Math.floor(itemIndex / columnsPerYear)
@@ -238,12 +242,15 @@ const Atlas = () => {
       const x = yearStartX + col * (finalWidth + rowSpacing)
       const y = row * (finalHeight + rowSpacing)
 
+      // Capture the current index for the closure
+      const currentIndex = globalIndex
+
       thumbnailInstances.push(
         <Thumbnail
           key={imageData.filename || globalIndex}
           position={[x, y, 0]}
           scale={[finalWidth, finalHeight, 1]}
-          onClick={() => handleThumbnailClick(globalIndex, imageData)}
+          onClick={() => handleThumbnailClick(currentIndex, imageData)}
         />
       )
 

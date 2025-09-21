@@ -2,7 +2,7 @@ import { useRef, useEffect } from "react"
 import * as THREE from "three/webgpu"
 import * as TSL from "three/tsl"
 import { Canvas, extend, useFrame, useThree, type ThreeToJSXElements } from "@react-three/fiber"
-import { MapControls, OrbitControls, OrthographicCamera, PerspectiveCamera, useGLTF } from "@react-three/drei"
+import { Center, MapControls, OrbitControls, OrthographicCamera, PerspectiveCamera, useGLTF } from "@react-three/drei"
 
 import Experience from "./Experience"
 
@@ -11,6 +11,8 @@ declare module "@react-three/fiber" {
 }
 
 extend(THREE as any)
+
+const arr100 = Array.from({ length: 100 }, (_, i) => i)
 
 const Scene = () => {
   return (
@@ -33,7 +35,14 @@ const Scene = () => {
     >
       <Experience />
 
-      <OrthographicCamera position={[0, 0, 20]} zoom={50} makeDefault />
+      {/* {arr100.map((i) => (
+        <mesh key={i} position={[i, i, 0]}>
+          <boxGeometry args={[0.8, 0.8, 0.8]} />
+          <meshStandardMaterial color="red" />
+        </mesh>
+      ))} */}
+
+      <OrthographicCamera position={[0, 0, 50]} zoom={20} near={0.1} far={1000} makeDefault />
 
       <MapControls
         enableRotate={false}
@@ -41,9 +50,13 @@ const Scene = () => {
         enableZoom={true}
         panSpeed={1}
         zoomSpeed={1}
-        minZoom={10}
-        maxZoom={200}
+        minZoom={5}
+        maxZoom={500}
         screenSpacePanning={true}
+        minPolarAngle={Math.PI / 2}
+        maxPolarAngle={Math.PI / 2}
+        minAzimuthAngle={0}
+        maxAzimuthAngle={0}
       />
 
       {/* <OrbitControls /> */}
