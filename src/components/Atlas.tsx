@@ -1,21 +1,25 @@
-import { createInstances, Text } from "@react-three/drei"
 import { useLoader } from "@react-three/fiber"
 import * as THREE from "three"
 import { AtlasShaderMaterialTSL } from "@/shader/tsl/AtlasShaderMaterialTSL"
-import { useMemo, useEffect, useState } from "react"
+import { useMemo, useEffect, useState, useRef } from "react"
 import { useControls } from "leva"
-import { groupResultsByYear, calculateYearWidths, calculateYearPositions, getAtlasKey } from "@/utils/atlasUtils"
+import { groupResultsByYear, calculateYearWidths, calculateYearPositions } from "@/utils/atlasUtils"
 
-const [ThumbnailInstances, Thumbnail] = createInstances()
+// Native InstancedMesh replacement for previous createInstances usage
+// Each instance represents one thumbnail quad with per-instance transform & UV cropping via instanced attribute.
 
 const Atlas = () => {
   const [atlasData, setAtlasData] = useState(null)
   const atlasTexture = useLoader(THREE.TextureLoader, "/atlas/texture_atlas.webp")
 
-  // Handle thumbnail click
+  // Instance mesh ref
+  const instancedMeshRef = useRef<THREE.InstancedMesh | null>(null)
+
+  // Handle thumbnail click via R3F event instanceId
   const handleThumbnailClick = (index: number, imageData?: any) => {
+    if (!imageData) return
     console.log(`Thumbnail ${index} clicked`, imageData.sorting_number)
-    // Add your custom click logic here
+    // Extend click behavior here (e.g., open modal, highlight, etc.)
   }
 
   // Leva controls for thumbnail sizing and cropping
@@ -181,93 +185,118 @@ const Atlas = () => {
     return geometry
   }, [atlasData, sortedImages, cropMode, cropOffsetX, cropOffsetY, cropScale, thumbnailWidth, thumbnailHeight])
 
+  // Precompute per-instance transforms (position & scale) preserving original layout logic
+  const instanceTransforms = useMemo(() => {
+    if (!atlasData || !geometryWithAttributes || !sortedImages.length) {
+      return { positions: [] as [number, number, number][], scales: [] as [number, number, number][] }
+    }
+
+    const positions: [number, number, number][] = []
+    const scales: [number, number, number][] = []
+
+    yearKeys.forEach((year) => {
+      const yearItems = groupedByYear[year]
+      const yearStartX = yearPositions[year]
+
+      yearItems.forEach((imageData: any, itemIndex: number) => {
+        const row = Math.floor(itemIndex / columnsPerYear)
+        const col = itemIndex % columnsPerYear
+
+        const imageWidth = imageData.width || 100
+        const imageHeight = imageData.height || 100
+        const aspectRatio = imageWidth / imageHeight
+
+        let finalWidth: number, finalHeight: number
+        if (preserveAspectRatio) {
+          const targetAspect = thumbnailWidth / thumbnailHeight
+
+          if (aspectRatio > targetAspect) {
+            finalWidth = thumbnailWidth
+            finalHeight = thumbnailWidth / aspectRatio
+          } else {
+            finalHeight = thumbnailHeight
+            finalWidth = thumbnailHeight * aspectRatio
+          }
+        } else {
+          finalWidth = thumbnailWidth
+          finalHeight = thumbnailHeight
+        }
+
+        const x = yearStartX + col * (finalWidth + rowSpacing)
+        const y = row * (finalHeight + rowSpacing)
+
+        positions.push([x, y, 0])
+        scales.push([finalWidth, finalHeight, 1])
+      })
+    })
+
+    return { positions, scales }
+  }, [
+    atlasData,
+    geometryWithAttributes,
+    sortedImages,
+    yearKeys,
+    groupedByYear,
+    yearPositions,
+    columnsPerYear,
+    preserveAspectRatio,
+    thumbnailWidth,
+    thumbnailHeight,
+    rowSpacing,
+  ])
+
+  // Apply transforms to instanced mesh
+  useEffect(() => {
+    if (!instancedMeshRef.current || !instanceTransforms.positions.length) return
+    const mesh = instancedMeshRef.current
+    const dummy = new THREE.Object3D()
+    const { positions, scales } = instanceTransforms
+    const count = Math.min(positions.length, mesh.count)
+    for (let i = 0; i < count; i++) {
+      const pos = positions[i]
+      const scl = scales[i]
+      dummy.position.set(pos[0], pos[1], pos[2])
+      dummy.scale.set(scl[0], scl[1], scl[2])
+      dummy.rotation.set(0, 0, 0)
+      dummy.updateMatrix()
+      mesh.setMatrixAt(i, dummy.matrix)
+    }
+    mesh.instanceMatrix.needsUpdate = true
+  }, [instanceTransforms])
+
+  // Fallback UI (simplified) while data/material not ready
   if (!atlasMaterial || !atlasData || !geometryWithAttributes || !sortedImages.length) {
     return (
-      <>
-        <ThumbnailInstances>
-          <planeGeometry args={[1, 1]} />
-          <meshStandardMaterial color="orange" />
-          {sortedImages.map((imageData, i) => (
-            <group key={imageData.filename || i}>
-              <Thumbnail position={[i * 2, 0, 0]} onClick={() => handleThumbnailClick(i, imageData)} />
-            </group>
-          ))}
-        </ThumbnailInstances>
-      </>
+      <group>
+        {sortedImages.slice(0, 10).map((imageData: any, i: number) => (
+          <mesh
+            key={imageData.filename || i}
+            position={[i * 1.2, 0, 0]}
+            onClick={() => handleThumbnailClick(i, imageData)}
+          >
+            <planeGeometry args={[1, 1]} />
+            <meshStandardMaterial color="orange" />
+          </mesh>
+        ))}
+      </group>
     )
   }
 
-  // Create positioned instances for each year group
-  const thumbnailInstances = []
-  const yearLabels = []
-  let globalIndex = 0
-
-  yearKeys.forEach((year) => {
-    const yearItems = groupedByYear[year]
-    const yearStartX = yearPositions[year]
-    const rows = Math.ceil(yearItems.length / columnsPerYear)
-
-    // Track the lowest Y position for this year to position the year label
-    let minY = 0
-
-    yearItems.forEach((imageData, itemIndex) => {
-      const row = Math.floor(itemIndex / columnsPerYear)
-      const col = itemIndex % columnsPerYear
-
-      // Calculate position within the year group
-      const imageWidth = imageData.width || 100
-      const imageHeight = imageData.height || 100
-      const aspectRatio = imageWidth / imageHeight
-
-      // Calculate thumbnail dimensions based on settings
-      let finalWidth, finalHeight
-
-      if (preserveAspectRatio) {
-        // Preserve aspect ratio mode: scale to fit within specified dimensions
-        const targetAspect = thumbnailWidth / thumbnailHeight
-
-        if (aspectRatio > targetAspect) {
-          // Image is wider, scale by width
-          finalWidth = thumbnailWidth
-          finalHeight = thumbnailWidth / aspectRatio
-        } else {
-          // Image is taller, scale by height
-          finalHeight = thumbnailHeight
-          finalWidth = thumbnailHeight * aspectRatio
-        }
-      } else {
-        // Direct dimensions: use specified width and height (may distort aspect ratio)
-        finalWidth = thumbnailWidth
-        finalHeight = thumbnailHeight
-      }
-
-      const x = yearStartX + col * (finalWidth + rowSpacing)
-      const y = row * (finalHeight + rowSpacing)
-
-      // Capture the current index for the closure
-      const currentIndex = globalIndex
-
-      thumbnailInstances.push(
-        <Thumbnail
-          key={imageData.filename || globalIndex}
-          position={[x, y, 0]}
-          scale={[finalWidth, finalHeight, 1]}
-          onClick={() => handleThumbnailClick(currentIndex, imageData)}
-        />
-      )
-
-      globalIndex++
-    })
-  })
+  const instanceCount = instanceTransforms.positions.length
 
   return (
-    <>
-      <ThumbnailInstances limit={1001}>
-        <primitive object={geometryWithAttributes} attach="geometry" />
-        <primitive object={atlasMaterial} attach="material" />
-        {thumbnailInstances}
-      </ThumbnailInstances>
-    </>
+    <instancedMesh
+      ref={instancedMeshRef}
+      args={[geometryWithAttributes, atlasMaterial, instanceCount || 1]}
+      // Pointer events using R3F – instanceId gives which thumbnail was clicked
+      onClick={(e) => {
+        e.stopPropagation()
+        const index = e.instanceId ?? -1
+        if (index >= 0 && sortedImages[index]) {
+          handleThumbnailClick(index, sortedImages[index])
+        }
+      }}
+    />
   )
 }
 
