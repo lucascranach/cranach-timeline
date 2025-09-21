@@ -10,6 +10,8 @@ import TimelineAxis from "./TimelineAxis"
 import YearLabels from "./YearLabels"
 import ThumbnailMesh from "./ThumbnailMesh"
 import FallbackUI from "./FallbackUI"
+import Events from "./Events"
+import { useEvents } from "@/hooks/useEvents"
 
 // Native InstancedMesh replacement for previous createInstances usage
 // Each instance represents one thumbnail quad with per-instance transform & UV cropping via instanced attribute.
@@ -30,6 +32,25 @@ interface AtlasData {
   }
   images: AtlasImage[]
 }
+
+// Event files configuration with colors
+const EVENT_FILE_CONFIGS = [
+  {
+    file: "/events/cranachElderEvents_en.json",
+    name: "Cranach Elder",
+    color: "#ff6b35",
+  },
+  {
+    file: "/events/historyEvents_en.json",
+    name: "History",
+    color: "#4a90e2",
+  },
+  {
+    file: "/events/lutherEvents_en.json",
+    name: "Luther",
+    color: "#7ed321",
+  },
+]
 
 const Atlas = () => {
   const atlasTexture = useLoader(THREE.TextureLoader, "/atlas/texture_atlas.webp")
@@ -55,6 +76,9 @@ const Atlas = () => {
 
   // Load and process atlas data
   const { atlasData, sortedImages, groupedByYear, yearKeys, yearPositions } = useAtlasData(yearSpacing)
+
+  // Load events data
+  const { eventGroups } = useEvents(EVENT_FILE_CONFIGS)
 
   // Handle thumbnail click
   const handleThumbnailClick = (index: number, imageData?: AtlasImage) => {
@@ -138,6 +162,10 @@ const Atlas = () => {
         showAllYearLabels={showAllYearLabels}
         majorTickEvery={majorTickEvery}
       />
+
+      <group position={[0, 0, 0]}>
+        <Events eventGroups={eventGroups} yearPositions={yearPositions} thumbnailHeight={thumbnailHeight} />
+      </group>
     </group>
   )
 }
