@@ -39,22 +39,22 @@ const EVENT_FILE_CONFIGS = [
   {
     file: "/events/cranachElderEvents_en.json",
     name: "Cranach Elder",
-    color: "#ff6b35",
+    color: "#FEB701",
   },
   {
     file: "/events/cranachYoungerEvents_en.json",
     name: "Cranach Younger",
-    color: "#cd2828",
+    color: "#FEB701",
   },
   {
     file: "/events/historyEvents_en.json",
     name: "History",
-    color: "#4a90e2",
+    color: "#FEB701",
   },
   {
     file: "/events/lutherEvents_en.json",
     name: "Luther",
-    color: "#7ed321",
+    color: "#FEB701",
   },
 ]
 

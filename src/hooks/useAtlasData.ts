@@ -21,9 +21,11 @@ interface AtlasData {
 export const useAtlasData = (yearSpacing: number) => {
   const [atlasData, setAtlasData] = useState<AtlasData | null>(null)
 
-  // Define uniform timeline year range
-  const START_YEAR = 1500
+  // Define uniform timeline year range (extended earlier if needed)
+  const START_YEAR = 1400
   const END_YEAR = 1950
+  // Year that should appear at x = 0
+  const REFERENCE_YEAR = 1500
 
   // Load atlas data
   useEffect(() => {
@@ -51,9 +53,10 @@ export const useAtlasData = (yearSpacing: number) => {
     // Uniform year list from START_YEAR..END_YEAR (even if no images)
     const keys = Array.from({ length: END_YEAR - START_YEAR + 1 }, (_, i) => String(START_YEAR + i))
 
-    // Uniform positions: each year placed at fixed spacing along x
-    const positions = keys.reduce((acc, year, idx) => {
-      acc[year] = idx * yearSpacing
+    // Center positions so REFERENCE_YEAR maps to x = 0
+    const positions = keys.reduce((acc, year) => {
+      const yrNum = parseInt(year, 10)
+      acc[year] = (yrNum - REFERENCE_YEAR) * yearSpacing
       return acc
     }, {} as Record<string, number>)
 
