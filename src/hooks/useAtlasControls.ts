@@ -49,7 +49,7 @@ export const useAtlasControls = () => {
   })
 
   const eventControls = useControls("Event Settings", {
-    eventGap: { value: 0.15, min: 0, max: 1, step: 0.05, label: "Gap Between Types" },
+    eventGap: { value: 0.15, min: 0, max: 10, step: 0.05, label: "Gap Between Types" },
   })
 
   const dashControls = useControls("Decade Line Dashes", {

@@ -6,6 +6,7 @@ import { Center, MapControls, OrbitControls, OrthographicCamera, PerspectiveCame
 import { Text } from "@react-three/drei"
 
 import Experience from "./Experience"
+import { Leva } from "leva"
 
 declare module "@react-three/fiber" {
   interface ThreeElements extends ThreeToJSXElements<typeof THREE> {}
@@ -80,6 +81,34 @@ const TimelineControls = () => {
 }
 
 const Scene = () => {
+  // Enable fullscreen toggle via 'f' or 'F'
+  useEffect(() => {
+    const toggleFullscreen = () => {
+      const canvas = document.getElementById("webgpu-canvas") || document.documentElement
+      const doc: any = document
+      const isFs = doc.fullscreenElement || doc.webkitFullscreenElement
+      if (!isFs) {
+        const request = (canvas as any).requestFullscreen || (canvas as any).webkitRequestFullscreen
+        request?.call(canvas)
+      } else {
+        const exit = doc.exitFullscreen || doc.webkitExitFullscreen
+        exit?.call(doc)
+      }
+    }
+
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "f" || e.key === "F") {
+        // avoid triggering while typing in inputs/textareas
+        const target = e.target as HTMLElement
+        const tag = target?.tagName
+        if (tag === "INPUT" || tag === "TEXTAREA" || target?.isContentEditable) return
+        toggleFullscreen()
+      }
+    }
+
+    window.addEventListener("keydown", handleKey)
+    return () => window.removeEventListener("keydown", handleKey)
+  }, [])
   return (
     <Canvas
       flat
@@ -88,10 +117,9 @@ const Scene = () => {
           ...(props as unknown as ConstructorParameters<typeof THREE.WebGPURenderer>[0]),
           antialias: true,
           forceWebGL: true,
-          // colorBufferType: THREE.UnsignedByteType,
         })
-
         await renderer.init()
+        renderer.setClearColor(new THREE.Color("#18181a"), 1)
         return renderer
       }}
       id="webgpu-canvas"
@@ -99,6 +127,7 @@ const Scene = () => {
       shadows
     >
       <Experience />
+      {/* <Leva hidden /> */}
 
       {/* {arr100.map((i) => (
         <mesh key={i} position={[i, i, 0]}>
@@ -107,7 +136,7 @@ const Scene = () => {
         </mesh>
       ))} */}
 
-      <OrthographicCamera position={[0, 0, 50]} zoom={10} near={0.1} far={10000} makeDefault />
+      <OrthographicCamera position={[0, 0, 50]} zoom={8} near={0.1} far={10000} makeDefault />
 
       <TimelineControls />
 
