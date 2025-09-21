@@ -13,6 +13,72 @@ declare module "@react-three/fiber" {
 
 extend(THREE as any)
 
+// Custom controls component to handle horizontal-only scrolling (mouse wheel) and panning (drag)
+const TimelineControls = () => {
+  const { camera, gl } = useThree()
+  const controlsRef = useRef<any>(null)
+
+  useEffect(() => {
+    const controls = controlsRef.current
+    if (!controls) return
+
+    const initialY = camera.position.y
+    const initialTargetY = controls.target.y
+
+    // Adjustable scroll speed (world units per wheel delta unit)
+    const SCROLL_SPEED = 0.04
+
+    const handleWheel = (event: WheelEvent) => {
+      // Allow cmd/ctrl + scroll for browser shortcuts, otherwise hijack
+      if (event.metaKey || event.ctrlKey) return
+      event.preventDefault()
+      event.stopPropagation()
+
+      // Use deltaY for horizontal move (invert if desired). Shift+scroll can naturally be horizontal in some OS; unify here.
+      const raw = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY
+      const deltaX = raw * SCROLL_SPEED
+
+      camera.position.x += deltaX
+      controls.target.x += deltaX
+
+      // Lock Y axes
+      camera.position.y = initialY
+      controls.target.y = initialTargetY
+
+      controls.update()
+    }
+
+    const canvas = gl.domElement
+    canvas.addEventListener("wheel", handleWheel, { passive: false })
+
+    return () => {
+      canvas.removeEventListener("wheel", handleWheel as any)
+    }
+  }, [gl, camera])
+
+  return (
+    <MapControls
+      ref={controlsRef}
+      enableRotate={false}
+      enablePan={true}
+      enableZoom={false}
+      enableDamping={false}
+      panSpeed={1}
+      screenSpacePanning={false}
+      minPolarAngle={Math.PI / 2}
+      maxPolarAngle={Math.PI / 2}
+      minAzimuthAngle={0}
+      maxAzimuthAngle={0}
+      mouseButtons={{
+        LEFT: THREE.MOUSE.PAN,
+        MIDDLE: THREE.MOUSE.PAN,
+        RIGHT: THREE.MOUSE.PAN,
+      }}
+      listenToKeyEvents={false}
+    />
+  )
+}
+
 const Scene = () => {
   return (
     <Canvas
@@ -41,22 +107,9 @@ const Scene = () => {
         </mesh>
       ))} */}
 
-      <OrthographicCamera position={[0, 0, 50]} zoom={20} near={0.1} far={10000} makeDefault />
+      <OrthographicCamera position={[0, 0, 50]} zoom={10} near={0.1} far={10000} makeDefault />
 
-      <MapControls
-        enableRotate={false}
-        enablePan={true}
-        enableZoom={true}
-        panSpeed={1}
-        zoomSpeed={1}
-        minZoom={5}
-        maxZoom={500}
-        screenSpacePanning={true}
-        minPolarAngle={Math.PI / 2}
-        maxPolarAngle={Math.PI / 2}
-        minAzimuthAngle={0}
-        maxAzimuthAngle={0}
-      />
+      <TimelineControls />
 
       {/* <OrbitControls /> */}
       <ambientLight intensity={1} />

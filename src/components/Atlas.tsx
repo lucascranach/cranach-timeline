@@ -144,7 +144,7 @@ const Atlas = () => {
   const instanceCount = instanceTransforms.positions.length
 
   return (
-    <group>
+    <group position={[0, -30, 0]}>
       {/* Vertical decade background */}
       <DecadeDiagonalBackground
         yearKeys={yearKeys}
@@ -157,13 +157,13 @@ const Atlas = () => {
       />
 
       <group position={[0, -1, 0]}>
-        <TimelineAxis
+        {/* <TimelineAxis
           yearKeys={yearKeys}
           yearPositions={yearPositions}
           thumbnailHeight={thumbnailHeight}
           majorTickEvery={majorTickEvery}
           showAxis={showAxis}
-        />
+        /> */}
         <YearLabels
           yearLabels={instanceTransforms.yearColumnLabels}
           thumbnailHeight={thumbnailHeight}
@@ -182,13 +182,13 @@ const Atlas = () => {
         onThumbnailClick={handleThumbnailClick}
       />
 
-      <group position={[0, 0, 0]}>
-        {/* <Events
+      <group position={[0, -7, 0]}>
+        <Events
           eventGroups={eventGroups}
           yearPositions={yearPositions}
           thumbnailHeight={thumbnailHeight}
           gapBetweenGroups={eventGap}
-        /> */}
+        />
       </group>
     </group>
   )
