@@ -1,4 +1,5 @@
 import { useLoader } from "@react-three/fiber"
+import { Html } from "@react-three/drei"
 import * as THREE from "three"
 import { AtlasShaderMaterialTSL } from "@/shader/tsl/AtlasShaderMaterialTSL"
 import { useMemo, useEffect, useState, useRef } from "react"
@@ -35,6 +36,9 @@ const Atlas = () => {
     rowSpacing,
     yearSpacing,
     instanceLimit,
+    showAxis,
+    showAllYearLabels,
+    majorTickEvery,
   } = useControls("Thumbnail Settings", {
     thumbnailWidth: { value: 1, min: 0.1, max: 3, step: 0.1, label: "Width" },
     thumbnailHeight: { value: 0.5, min: 0.1, max: 3, step: 0.1, label: "Height" },
@@ -52,6 +56,9 @@ const Atlas = () => {
     cropOffsetX: { value: 0, min: -1, max: 1, step: 0.01, label: "Crop Offset X" },
     cropOffsetY: { value: 0, min: -1, max: 1, step: 0.01, label: "Crop Offset Y" },
     cropScale: { value: 1, min: 0.1, max: 2, step: 0.01, label: "Crop Scale" },
+    showAxis: { value: true, label: "Show Axis" },
+    showAllYearLabels: { value: false, label: "Show All Year Labels" },
+    majorTickEvery: { value: 10, min: 2, max: 50, step: 1, label: "Major Tick Every" },
   })
 
   // Load atlas data
@@ -77,6 +84,10 @@ const Atlas = () => {
   }, [atlasTexture, atlasData, cropMode, cropOffsetX, cropOffsetY, cropScale])
 
   // Sort and group images by year from sorting_number
+  // Define uniform timeline year range
+  const START_YEAR = 1500
+  const END_YEAR = 1950
+
   const { sortedImages, groupedByYear, yearKeys, yearPositions } = useMemo(() => {
     if (!atlasData?.images) {
       return { sortedImages: [], groupedByYear: {}, yearKeys: [], yearPositions: {} }
@@ -91,11 +102,14 @@ const Atlas = () => {
 
     // Group by year using atlasUtils
     const grouped = groupResultsByYear(sorted)
-    const keys = Object.keys(grouped).sort()
+    // Uniform year list from START_YEAR..END_YEAR (even if no images)
+    const keys = Array.from({ length: END_YEAR - START_YEAR + 1 }, (_, i) => String(START_YEAR + i))
 
-    // Calculate year positions
-    const yearWidths = calculateYearWidths(grouped, atlasData, columnsPerYear, thumbnailWidth, rowSpacing)
-    const positions = calculateYearPositions(keys, yearWidths, yearSpacing)
+    // Uniform positions: each year placed at fixed spacing along x
+    const positions = keys.reduce((acc, year, idx) => {
+      acc[year] = idx * yearSpacing
+      return acc
+    }, {} as Record<string, number>)
 
     return {
       sortedImages: sorted,
@@ -188,15 +202,23 @@ const Atlas = () => {
   // Precompute per-instance transforms (position & scale) preserving original layout logic
   const instanceTransforms = useMemo(() => {
     if (!atlasData || !geometryWithAttributes || !sortedImages.length) {
-      return { positions: [] as [number, number, number][], scales: [] as [number, number, number][] }
+      return {
+        positions: [] as [number, number, number][],
+        scales: [] as [number, number, number][],
+        yearColumnLabels: [] as { x: number; y: number; year: string; key: string }[],
+      }
     }
 
     const positions: [number, number, number][] = []
     const scales: [number, number, number][] = []
+    const yearColumnLabels: { x: number; y: number; year: string; key: string }[] = []
 
     yearKeys.forEach((year) => {
-      const yearItems = groupedByYear[year]
-      const yearStartX = yearPositions[year]
+      const yearItems = groupedByYear[year] || []
+      const yearCenterX = yearPositions[year]
+
+      // Track first-row (row 0) columns for label placement
+      const firstRowColumns: { col: number; x: number; width: number; height: number }[] = []
 
       yearItems.forEach((imageData: any, itemIndex: number) => {
         const row = Math.floor(itemIndex / columnsPerYear)
@@ -209,7 +231,6 @@ const Atlas = () => {
         let finalWidth: number, finalHeight: number
         if (preserveAspectRatio) {
           const targetAspect = thumbnailWidth / thumbnailHeight
-
           if (aspectRatio > targetAspect) {
             finalWidth = thumbnailWidth
             finalHeight = thumbnailWidth / aspectRatio
@@ -222,15 +243,45 @@ const Atlas = () => {
           finalHeight = thumbnailHeight
         }
 
-        const x = yearStartX + col * (finalWidth + rowSpacing)
+        // Compute total columns for this year to center them around the yearCenterX
+        const totalCols = Math.min(columnsPerYear, yearItems.length)
+        const rows = Math.ceil(yearItems.length / columnsPerYear)
+        // Width of one column cell (including spacing except maybe last) approximated via finalWidth + rowSpacing
+        const columnsInFirstRow = Math.min(columnsPerYear, yearItems.length)
+        const totalWidthFirstRow = columnsInFirstRow * finalWidth + (columnsInFirstRow - 1) * rowSpacing
+        const firstColStart = yearCenterX - totalWidthFirstRow / 2
+        const x = firstColStart + col * (finalWidth + rowSpacing)
         const y = row * (finalHeight + rowSpacing)
 
         positions.push([x, y, 0])
         scales.push([finalWidth, finalHeight, 1])
+
+        if (row === 0) {
+          firstRowColumns.push({ col, x, width: finalWidth, height: finalHeight })
+        }
       })
+
+      if (yearItems.length > 0) {
+        // After processing year items, create a single centered label for the year
+        const labelY = -thumbnailHeight * 0.75
+        yearColumnLabels.push({
+          x: yearCenterX,
+          y: labelY,
+          year,
+          key: `${year}-center`,
+        })
+      } else {
+        // Empty year still gets a tick label
+        yearColumnLabels.push({
+          x: yearCenterX,
+          y: -thumbnailHeight * 0.75,
+          year,
+          key: `${year}-empty`,
+        })
+      }
     })
 
-    return { positions, scales }
+    return { positions, scales, yearColumnLabels }
   }, [
     atlasData,
     geometryWithAttributes,
@@ -285,18 +336,78 @@ const Atlas = () => {
   const instanceCount = instanceTransforms.positions.length
 
   return (
-    <instancedMesh
-      ref={instancedMeshRef}
-      args={[geometryWithAttributes, atlasMaterial, instanceCount || 1]}
-      // Pointer events using R3F – instanceId gives which thumbnail was clicked
-      onClick={(e) => {
-        e.stopPropagation()
-        const index = e.instanceId ?? -1
-        if (index >= 0 && sortedImages[index]) {
-          handleThumbnailClick(index, sortedImages[index])
-        }
-      }}
-    />
+    <group>
+      {showAxis && (
+        <group name="timeline-axis">
+          {/* Baseline spanning full years range */}
+          {(() => {
+            const totalYears = yearKeys.length - 1
+            const axisStart = yearPositions[yearKeys[0]]
+            const axisEnd = yearPositions[yearKeys[yearKeys.length - 1]]
+            const axisWidth = axisEnd - axisStart
+            return (
+              <mesh position={[axisStart + axisWidth / 2, -thumbnailHeight * 0.5, -0.001]}>
+                <planeGeometry args={[axisWidth, 0.01]} />
+                <meshBasicMaterial color="#888" />
+              </mesh>
+            )
+          })()}
+          {/* Tick marks */}
+          {yearKeys.map((year) => {
+            const x = yearPositions[year]
+            const y = -thumbnailHeight * 0.5
+            const isMajor = parseInt(year) % majorTickEvery === 0
+            const height = isMajor ? 0.15 : 0.08
+            return (
+              <mesh key={`tick-${year}`} position={[x, y, -0.002]}>
+                <planeGeometry args={[0.005, height]} />
+                <meshBasicMaterial color={isMajor ? "#bbb" : "#666"} />
+              </mesh>
+            )
+          })}
+        </group>
+      )}
+      <instancedMesh
+        ref={instancedMeshRef}
+        args={[geometryWithAttributes, atlasMaterial, instanceCount || 1]}
+        frustumCulled={false}
+        onClick={(e) => {
+          e.stopPropagation()
+          const index = e.instanceId ?? -1
+          if (index >= 0 && sortedImages[index]) {
+            handleThumbnailClick(index, sortedImages[index])
+          }
+        }}
+      />
+      {/* Year labels (HTML) repeated under each column */}
+      {instanceTransforms.yearColumnLabels
+        .filter((lbl) => showAllYearLabels || parseInt(lbl.year) % majorTickEvery === 0)
+        .map((lbl) => (
+          <Html
+            key={lbl.key}
+            position={[lbl.x, lbl.y - 1, 0.001]}
+            // transform
+            // distanceFactor={4}
+            center
+            style={{ pointerEvents: "none" }}
+          >
+            <div
+              style={{
+                fontSize: `${thumbnailHeight * 18}px`,
+                lineHeight: 1,
+                fontWeight: 500,
+                fontFamily: "system-ui, sans-serif",
+                color: "#fff",
+                textShadow: "0 0 4px rgba(0,0,0,0.8)",
+                whiteSpace: "nowrap",
+                transform: "translateY(-2px)",
+              }}
+            >
+              {lbl.year}
+            </div>
+          </Html>
+        ))}
+    </group>
   )
 }
 

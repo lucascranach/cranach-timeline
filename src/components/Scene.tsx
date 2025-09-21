@@ -3,6 +3,7 @@ import * as THREE from "three/webgpu"
 import * as TSL from "three/tsl"
 import { Canvas, extend, useFrame, useThree, type ThreeToJSXElements } from "@react-three/fiber"
 import { Center, MapControls, OrbitControls, OrthographicCamera, PerspectiveCamera, useGLTF } from "@react-three/drei"
+import { Text } from "@react-three/drei"
 
 import Experience from "./Experience"
 
