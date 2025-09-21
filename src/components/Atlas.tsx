@@ -79,6 +79,9 @@ const Atlas = () => {
     showAllYearLabels,
     majorTickEvery,
     eventGap,
+    dashLength,
+    dashGap,
+    dashSpeed,
   } = controls
 
   // Load and process atlas data
@@ -154,6 +157,9 @@ const Atlas = () => {
         opacity={0.4}
         lineColor={new THREE.Color(0.25, 0.25, 0.3)}
         backgroundColor={new THREE.Color("#18181a")} // Match the overall background color
+        dashLength={dashLength}
+        gapLength={dashGap}
+        dashSpeed={dashSpeed}
       />
 
       <group position={[0, -1, 0]}>

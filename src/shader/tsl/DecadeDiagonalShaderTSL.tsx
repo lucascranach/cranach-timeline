@@ -1,4 +1,6 @@
 import { useMemo } from "react"
+import { useRef } from "react"
+import { useFrame } from "@react-three/fiber"
 import * as THREE from "three/webgpu"
 import * as TSL from "three/tsl"
 
@@ -8,6 +10,9 @@ interface DecadeVerticalShaderOptions {
   backgroundColor?: THREE.Color // Background color
   opacity?: number // Overall opacity of the effect
   decadePositions?: number[] // Array of x positions where decade lines should appear
+  dashLength?: number // Length of the visible dash segment along Y
+  gapLength?: number // Length of the gap between dashes
+  dashOffset?: number // Offset to scroll / shift dash pattern
 }
 
 export const DecadeVerticalShaderTSL = (options: DecadeVerticalShaderOptions = {}) => {
@@ -17,6 +22,9 @@ export const DecadeVerticalShaderTSL = (options: DecadeVerticalShaderOptions = {
     backgroundColor = new THREE.Color(0.02, 0.02, 0.05),
     opacity = 0.5,
     decadePositions = [],
+    dashLength = 1.0,
+    gapLength = 0.6,
+    dashOffset = 0.0,
   } = options
 
   // Create uniform nodes for shader parameters
@@ -24,6 +32,9 @@ export const DecadeVerticalShaderTSL = (options: DecadeVerticalShaderOptions = {
   const lineColorNode = TSL.uniform(lineColor)
   const backgroundColorNode = TSL.uniform(backgroundColor)
   const opacityNode = TSL.uniform(opacity)
+  const dashLengthNode = TSL.uniform(dashLength)
+  const gapLengthNode = TSL.uniform(gapLength)
+  const dashOffsetNode = TSL.uniform(dashOffset)
 
   // Calculate average spacing for regular pattern fallback
   const avgSpacing =
@@ -42,6 +53,7 @@ export const DecadeVerticalShaderTSL = (options: DecadeVerticalShaderOptions = {
   const decadeGridLogic = TSL.Fn(() => {
     // Get x coordinate in world space
     const x = worldPos.x
+    const y = worldPos.y // used for dash pattern along vertical lines
 
     // Create vertical lines at decade positions
     // Since we can't easily iterate through arrays in TSL, we use a mathematical approach
@@ -59,8 +71,26 @@ export const DecadeVerticalShaderTSL = (options: DecadeVerticalShaderOptions = {
     const lineFade = TSL.smoothstep(fadeStart, fadeEnd, distanceFromLine)
     const lineStrength = isLine.select(TSL.sub(1.0, lineFade), 0.0)
 
+    // --- Dash pattern logic ---
+    // We create a repeating pattern along Y composed of a visible segment (dashLength) and a gap (gapLength)
+    const dashCycle = dashLengthNode.add(gapLengthNode)
+    // Shift / animate via dashOffset
+    const dashPos = TSL.mod(y.add(dashOffsetNode), dashCycle)
+    const dashVisible = dashPos.lessThan(dashLengthNode)
+
+    // Optional: soften dash edges (very small fade for aesthetics)
+    const dashEdgeFadeSize = dashLengthNode.mul(0.15) // 15% of dash length
+    const distanceIntoDash = dashPos
+    const distanceFromDashEnd = dashLengthNode.sub(dashPos)
+    const edgeMin = TSL.min(distanceIntoDash, distanceFromDashEnd)
+    const dashEdgeFade = TSL.smoothstep(0.0, dashEdgeFadeSize, edgeMin)
+
+    const dashMask = dashVisible.select(dashEdgeFade, 0.0)
+
+    const dashedLineStrength = lineStrength.mul(dashMask)
+
     // Mix between background and line color
-    const finalColor = TSL.mix(backgroundColorNode, lineColorNode, lineStrength)
+    const finalColor = TSL.mix(backgroundColorNode, lineColorNode, dashedLineStrength)
 
     return finalColor
   })
@@ -88,6 +118,7 @@ interface DecadeVerticalBackgroundProps extends DecadeVerticalShaderOptions {
   position?: [number, number, number]
   yearKeys?: string[]
   yearPositions?: Record<string, number>
+  dashSpeed?: number // units per second to scroll dash pattern
 }
 
 export const DecadeDiagonalBackground = ({
@@ -96,6 +127,7 @@ export const DecadeDiagonalBackground = ({
   position = [0, 0, -2],
   yearKeys,
   yearPositions,
+  dashSpeed = 0,
   ...shaderOptions
 }: DecadeVerticalBackgroundProps) => {
   // Calculate decade positions from year data
@@ -203,6 +235,20 @@ export const DecadeDiagonalBackground = ({
   const material = useMemo(() => {
     return DecadeVerticalShaderTSL({ ...shaderOptions, decadePositions })
   }, [shaderOptions, decadePositions])
+
+  // Animate dash offset if dashSpeed != 0 (mutating the uniform value each frame)
+  const dashOffsetRef = useRef(0)
+  useFrame((_, delta) => {
+    if (dashSpeed !== 0 && (material as any)?.colorNode) {
+      dashOffsetRef.current += dashSpeed * delta
+      // access the uniforms we created (dashOffsetNode) indirectly by reconstructing material? Instead we recreate with changed option.
+      // Simpler: update the underlying uniform value if exposed; NodeMaterial stores uniforms in material.uniforms
+      const uniforms = (material as any).uniforms
+      if (uniforms && uniforms.dashOffsetNode) {
+        uniforms.dashOffsetNode.value = dashOffsetRef.current
+      }
+    }
+  })
 
   return (
     <mesh position={centerPosition}>

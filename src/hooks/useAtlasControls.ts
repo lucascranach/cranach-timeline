@@ -16,6 +16,9 @@ export interface AtlasControlsConfig {
   showAllYearLabels: boolean
   majorTickEvery: number
   eventGap: number
+  dashLength: number
+  dashGap: number
+  dashSpeed: number
 }
 
 export const useAtlasControls = () => {
@@ -49,9 +52,16 @@ export const useAtlasControls = () => {
     eventGap: { value: 0.15, min: 0, max: 1, step: 0.05, label: "Gap Between Types" },
   })
 
+  const dashControls = useControls("Decade Line Dashes", {
+    dashLength: { value: 0.1, min: 0.1, max: 10, step: 0.1, label: "Dash Length" },
+    dashGap: { value: 0.8, min: 0.1, max: 10, step: 0.1, label: "Dash Gap" },
+    dashSpeed: { value: 0.0, min: -5, max: 5, step: 0.1, label: "Dash Scroll Speed" },
+  })
+
   return {
     ...thumbnailControls,
     ...timelineControls,
     ...eventControls,
+    ...dashControls,
   } as AtlasControlsConfig
 }
