@@ -30,6 +30,7 @@ const Atlas = () => {
     columnsPerYear,
     rowSpacing,
     yearSpacing,
+    instanceLimit,
   } = useControls("Thumbnail Settings", {
     thumbnailWidth: { value: 1, min: 0.1, max: 3, step: 0.1, label: "Width" },
     thumbnailHeight: { value: 0.5, min: 0.1, max: 3, step: 0.1, label: "Height" },
@@ -38,6 +39,7 @@ const Atlas = () => {
     columnsPerYear: { value: 1, min: 1, max: 20, step: 1, label: "Columns per Year" },
     rowSpacing: { value: 0.01, min: 0.1, max: 5, step: 0.1, label: "Row Spacing" },
     yearSpacing: { value: 2, min: 0.1, max: 10, step: 0.1, label: "Year Spacing" },
+    instanceLimit: { value: 0, min: 0, max: 10000, step: 100, label: "Instance Limit (0 = auto)" },
     cropMode: {
       value: "fill",
       options: ["fit", "fill", "custom"],
@@ -260,7 +262,7 @@ const Atlas = () => {
 
   return (
     <>
-      <ThumbnailInstances limit={2700}>
+      <ThumbnailInstances limit={1001}>
         <primitive object={geometryWithAttributes} attach="geometry" />
         <primitive object={atlasMaterial} attach="material" />
         {thumbnailInstances}
