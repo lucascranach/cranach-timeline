@@ -41,6 +41,11 @@ const EVENT_FILE_CONFIGS = [
     color: "#ff6b35",
   },
   {
+    file: "/events/cranachYoungerEvents_en.json",
+    name: "Cranach Younger",
+    color: "#cd2828",
+  },
+  {
     file: "/events/historyEvents_en.json",
     name: "History",
     color: "#4a90e2",
@@ -72,6 +77,7 @@ const Atlas = () => {
     showAxis,
     showAllYearLabels,
     majorTickEvery,
+    eventGap,
   } = controls
 
   // Load and process atlas data
@@ -138,13 +144,21 @@ const Atlas = () => {
 
   return (
     <group>
-      <TimelineAxis
-        yearKeys={yearKeys}
-        yearPositions={yearPositions}
-        thumbnailHeight={thumbnailHeight}
-        majorTickEvery={majorTickEvery}
-        showAxis={showAxis}
-      />
+      <group position={[0, -1, 0]}>
+        <TimelineAxis
+          yearKeys={yearKeys}
+          yearPositions={yearPositions}
+          thumbnailHeight={thumbnailHeight}
+          majorTickEvery={majorTickEvery}
+          showAxis={showAxis}
+        />
+        <YearLabels
+          yearLabels={instanceTransforms.yearColumnLabels}
+          thumbnailHeight={thumbnailHeight}
+          showAllYearLabels={showAllYearLabels}
+          majorTickEvery={majorTickEvery}
+        />
+      </group>
 
       <ThumbnailMesh
         geometry={geometryWithAttributes}
@@ -156,15 +170,13 @@ const Atlas = () => {
         onThumbnailClick={handleThumbnailClick}
       />
 
-      <YearLabels
-        yearLabels={instanceTransforms.yearColumnLabels}
-        thumbnailHeight={thumbnailHeight}
-        showAllYearLabels={showAllYearLabels}
-        majorTickEvery={majorTickEvery}
-      />
-
       <group position={[0, 0, 0]}>
-        <Events eventGroups={eventGroups} yearPositions={yearPositions} thumbnailHeight={thumbnailHeight} />
+        {/* <Events
+          eventGroups={eventGroups}
+          yearPositions={yearPositions}
+          thumbnailHeight={thumbnailHeight}
+          gapBetweenGroups={eventGap}
+        /> */}
       </group>
     </group>
   )

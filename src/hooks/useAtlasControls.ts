@@ -15,10 +15,11 @@ export interface AtlasControlsConfig {
   showAxis: boolean
   showAllYearLabels: boolean
   majorTickEvery: number
+  eventGap: number
 }
 
 export const useAtlasControls = () => {
-  return useControls("Thumbnail Settings", {
+  const thumbnailControls = useControls("Thumbnail Settings", {
     thumbnailWidth: { value: 1, min: 0.1, max: 3, step: 0.1, label: "Width" },
     thumbnailHeight: { value: 0.5, min: 0.1, max: 3, step: 0.1, label: "Height" },
     preserveAspectRatio: { value: false, label: "Preserve Aspect Ratio" },
@@ -36,9 +37,21 @@ export const useAtlasControls = () => {
     cropOffsetX: { value: 0, min: -1, max: 1, step: 0.01, label: "Crop Offset X" },
     cropOffsetY: { value: 0, min: -1, max: 1, step: 0.01, label: "Crop Offset Y" },
     cropScale: { value: 1, min: 0.1, max: 2, step: 0.01, label: "Crop Scale" },
+  })
 
+  const timelineControls = useControls("Timeline Settings", {
     showAxis: { value: true, label: "Show Axis" },
     showAllYearLabels: { value: false, label: "Show All Year Labels" },
     majorTickEvery: { value: 10, min: 2, max: 50, step: 1, label: "Major Tick Every" },
-  }) as AtlasControlsConfig
+  })
+
+  const eventControls = useControls("Event Settings", {
+    eventGap: { value: 0.15, min: 0, max: 1, step: 0.05, label: "Gap Between Types" },
+  })
+
+  return {
+    ...thumbnailControls,
+    ...timelineControls,
+    ...eventControls,
+  } as AtlasControlsConfig
 }

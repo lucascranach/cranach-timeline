@@ -22,8 +22,8 @@ const TimelineAxis = ({ yearKeys, yearPositions, thumbnailHeight, majorTickEvery
     <group name="timeline-axis">
       {/* Baseline spanning full years range */}
       <mesh position={[axisStart + axisWidth / 2, baselineY, -0.001]}>
-        <planeGeometry args={[axisWidth, 0.01]} />
-        <meshBasicMaterial color="#888" />
+        <planeGeometry args={[axisWidth, 0.1]} />
+        <meshBasicMaterial color="#fff" />
       </mesh>
 
       {/* Tick marks */}

@@ -142,10 +142,10 @@ const Events = ({ eventGroups, yearPositions, thumbnailHeight, gapBetweenGroups 
               return (
                 <mesh
                   key={`event-point-${id}`}
-                  position={[startPos, eventY, 0.002]}
+                  position={[startPos - 0.5, eventY, 0.002]}
                   onClick={() => handleEventClick(event, group.name)}
                 >
-                  <circleGeometry args={[0.08, 16]} />
+                  <planeGeometry args={[1, 0.5]} />
                   <meshBasicMaterial color={group.color} />
                 </mesh>
               )
