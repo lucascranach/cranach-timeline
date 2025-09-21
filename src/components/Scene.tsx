@@ -12,8 +12,6 @@ declare module "@react-three/fiber" {
 
 extend(THREE as any)
 
-const arr100 = Array.from({ length: 100 }, (_, i) => i)
-
 const Scene = () => {
   return (
     <Canvas
@@ -42,7 +40,7 @@ const Scene = () => {
         </mesh>
       ))} */}
 
-      <OrthographicCamera position={[0, 0, 50]} zoom={20} near={0.1} far={1000} makeDefault />
+      <OrthographicCamera position={[0, 0, 50]} zoom={20} near={0.1} far={10000} makeDefault />
 
       <MapControls
         enableRotate={false}

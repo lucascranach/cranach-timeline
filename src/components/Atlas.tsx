@@ -14,7 +14,7 @@ const Atlas = () => {
 
   // Handle thumbnail click
   const handleThumbnailClick = (index: number, imageData?: any) => {
-    console.log(`Thumbnail ${index} clicked`, imageData)
+    console.log(`Thumbnail ${index} clicked`, imageData.sorting_number)
     // Add your custom click logic here
   }
 
@@ -260,7 +260,7 @@ const Atlas = () => {
 
   return (
     <>
-      <ThumbnailInstances>
+      <ThumbnailInstances limit={2700}>
         <primitive object={geometryWithAttributes} attach="geometry" />
         <primitive object={atlasMaterial} attach="material" />
         {thumbnailInstances}
