@@ -1,6 +1,7 @@
-import { useThree, useFrame } from '@react-three/fiber'
-import { useEffect, useRef } from 'react'
-import * as THREE from 'three'
+import { useThree, useFrame } from "@react-three/fiber"
+import { useEffect, useRef, useMemo } from "react"
+import { useControls } from "leva"
+import * as THREE from "three"
 
 /**
  * CameraPlane
@@ -23,15 +24,57 @@ export interface CameraPlaneProps {
 }
 
 const CameraPlane = ({
-  offset = [0, 0, -10],
-  size = [10, 4],
-  color = '#ffffff',
-  opacity = 0.1,
-  depthTest = false,
+  offset: offsetProp,
+  size: sizeProp,
+  color: colorProp,
+  opacity: opacityProp,
+  depthTest: depthTestProp,
 }: CameraPlaneProps) => {
   const { camera } = useThree()
   const groupRef = useRef<THREE.Group>(null)
   const matRef = useRef<THREE.MeshBasicMaterial>(null)
+
+  // Leva controls (namespaced to avoid collisions)
+  const controlValues = useControls("CameraPlane", {
+    offset: {
+      value: (offsetProp ?? [0, 0, -10]) as [number, number, number],
+      label: "Offset",
+      step: 0.1,
+    },
+    width: {
+      value: sizeProp?.[0] ?? 10,
+      min: 0.1,
+      max: 1000,
+      step: 0.1,
+    },
+    height: {
+      value: sizeProp?.[1] ?? 49.1,
+      min: 0.1,
+      max: 100,
+      step: 0.1,
+    },
+    color: (typeof colorProp === "string" ? colorProp : "#ffffff") ?? "#ffffff",
+    opacity: {
+      value: opacityProp ?? 0.1,
+      min: 0,
+      max: 1,
+      step: 0.01,
+    },
+    depthTest: {
+      value: depthTestProp ?? false,
+      label: "Depth Test",
+    },
+  }) as unknown as {
+    offset: [number, number, number]
+    width: number
+    height: number
+    color: string
+    opacity: number
+    depthTest: boolean
+  }
+
+  const { offset, width, height, color, opacity, depthTest } = controlValues
+  const size: [number, number] = useMemo(() => [width, height], [width, height])
 
   useFrame(() => {
     if (!groupRef.current) return
@@ -55,10 +98,10 @@ const CameraPlane = ({
         <meshBasicMaterial
           ref={matRef}
           color={color as any}
-            transparent
-            opacity={opacity}
-            depthTest={depthTest}
-            depthWrite={false}
+          transparent
+          opacity={opacity}
+          depthTest={depthTest}
+          depthWrite={false}
         />
       </mesh>
     </group>

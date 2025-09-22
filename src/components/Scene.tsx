@@ -6,6 +6,7 @@ import { Center, MapControls, OrbitControls, OrthographicCamera, PerspectiveCame
 import { Text } from "@react-three/drei"
 
 import Experience from "./Experience"
+import CameraPlane from "./CameraPlane"
 import { Leva } from "leva"
 
 declare module "@react-three/fiber" {
@@ -127,6 +128,21 @@ const Scene = () => {
       shadows
     >
       <Experience />
+      {/* HUD-style plane fixed to camera, positioned below timeline for UI / backdrop */}
+      <CameraPlane
+        /*
+         * CameraPlane acts like a HUD element fixed to the camera.
+         * Atlas root group is positioned at y≈-30, with timeline / labels spread a few units further.
+         * We push this plane further down (y offset -55) so it appears clearly below the timeline band as a footer slab.
+         * Increase size width if you scroll beyond 220 world units horizontally.
+         * Z offset: negative (towards camera) so it stays in front when depthTest=false.
+         */
+        offset={[0, -55, -60]}
+        size={[220, 49.1]}
+        color={"#0f0f10"}
+        opacity={0.6}
+        depthTest={true}
+      />
       {/* <Leva hidden /> */}
 
       {/* {arr100.map((i) => (
