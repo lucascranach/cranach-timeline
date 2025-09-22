@@ -19,6 +19,7 @@ export interface AtlasControlsConfig {
   dashLength: number
   dashGap: number
   dashSpeed: number
+  atlasY: number
 }
 
 export const useAtlasControls = () => {
@@ -46,10 +47,11 @@ export const useAtlasControls = () => {
     showAxis: { value: true, label: "Show Axis" },
     showAllYearLabels: { value: false, label: "Show All Year Labels" },
     majorTickEvery: { value: 10, min: 2, max: 50, step: 1, label: "Major Tick Every" },
+    atlasY: { value: -30, min: -200, max: 200, step: 1, label: "Atlas Y Offset" },
   })
 
   const eventControls = useControls("Event Settings", {
-    eventGap: { value: 0.15, min: 0, max: 10, step: 0.05, label: "Gap Between Types" },
+    eventGap: { value: 3.2, min: 0, max: 10, step: 0.05, label: "Gap Between Types" },
   })
 
   const dashControls = useControls("Decade Line Dashes", {

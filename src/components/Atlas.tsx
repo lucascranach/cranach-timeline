@@ -1,5 +1,6 @@
 import { useLoader } from "@react-three/fiber"
 import * as THREE from "three"
+import CameraPlane from "./CameraPlane"
 import { AtlasShaderMaterialTSL } from "@/shader/tsl/AtlasShaderMaterialTSL"
 import { DecadeDiagonalBackground } from "@/shader/tsl/DecadeDiagonalShaderTSL"
 import { useMemo } from "react"
@@ -82,6 +83,7 @@ const Atlas = () => {
     dashLength,
     dashGap,
     dashSpeed,
+    atlasY,
   } = controls
 
   // Load and process atlas data
@@ -147,8 +149,22 @@ const Atlas = () => {
   const instanceCount = instanceTransforms.positions.length
 
   return (
-    <group position={[0, -30, 0]}>
+    <group position={[0, atlasY, 0]}>
       {/* Vertical decade background */}
+      <CameraPlane
+        /*
+         * CameraPlane acts like a HUD element fixed to the camera.
+         * Atlas root group is positioned at y≈-30, with timeline / labels spread a few units further.
+         * We push this plane further down (y offset -55) so it appears clearly below the timeline band as a footer slab.
+         * Increase size width if you scroll beyond 220 world units horizontally.
+         * Z offset: negative (towards camera) so it stays in front when depthTest=false.
+         */
+        offset={[0, -25, -60]}
+        size={[220, 49.1]}
+        color={"#0f0f10"}
+        opacity={0.6}
+        depthTest={true}
+      />
       <DecadeDiagonalBackground
         yearKeys={yearKeys}
         yearPositions={yearPositions}

@@ -1,4 +1,4 @@
-import { useMemo } from "react"
+import { useMemo, useRef, useLayoutEffect, useCallback } from "react"
 import * as THREE from "three"
 
 interface EventData {
@@ -103,56 +103,56 @@ const Events = ({ eventGroups, yearPositions, thumbnailHeight, gapBetweenGroups 
   // Position events below the timeline
   const eventBaseY = -thumbnailHeight * 0.5 - 0.3
 
+  // For each group we create an instanced mesh
   return (
     <group name="timeline-events">
-      {processedEventGroups.map((group) => (
-        <group key={group.name} name={`event-group-${group.name}`}>
-          {group.processedEvents.map((processedEvent) => {
-            const { id, startPos, endPos, isRange, event } = processedEvent
+      {processedEventGroups.map((group) => {
+        const count = group.processedEvents.length
+        const ref = useRef<THREE.InstancedMesh | null>(null)
+        const color = new THREE.Color(group.color)
+        const dummy = new THREE.Object3D()
+        const tempMatrix = new THREE.Matrix4()
+
+        useLayoutEffect(() => {
+          if (!ref.current) return
+          group.processedEvents.forEach((processedEvent, i) => {
+            const { startPos, endPos, isRange } = processedEvent
             const eventY = eventBaseY - group.yOffset
 
-            if (isRange && endPos !== null) {
-              // Render as a line for date ranges
-              const lineWidth = endPos - startPos
-              const centerX = startPos + lineWidth / 2
+            const width = isRange && endPos != null ? Math.max(0.0001, endPos - startPos) : 1
+            const centerX = isRange && endPos != null ? startPos + width * 0.5 : startPos
 
-              return (
-                <group key={`event-range-${id}`}>
-                  {/* Line connecting start and end */}
-                  <mesh position={[centerX, eventY, 0.001]} onClick={() => handleEventClick(event, group.name)}>
-                    <planeGeometry args={[lineWidth, 0.02]} />
-                    <meshBasicMaterial color={group.color} />
-                  </mesh>
+            dummy.position.set(centerX - 0.5, eventY, 0.002) // offset to align like previous
+            dummy.scale.set(width, 0.5, 1)
+            dummy.rotation.set(0, 0, 0)
+            dummy.updateMatrix()
+            ref.current!.setMatrixAt(i, dummy.matrix)
+          })
+          ref.current.instanceMatrix.needsUpdate = true
+        }, [group.processedEvents, eventBaseY, group.yOffset])
 
-                  {/* Start marker */}
-                  <mesh position={[startPos, eventY, 0.002]} onClick={() => handleEventClick(event, group.name)}>
-                    <circleGeometry args={[0.05, 16]} />
-                    <meshBasicMaterial color={group.color} />
-                  </mesh>
+        const onClick = useCallback(
+          (e) => {
+            e.stopPropagation()
+            const instanceId = e.instanceId
+            group.processedEvents[instanceId] && handleEventClick(group.processedEvents[instanceId].event, group.name)
+          },
+          [group]
+        )
 
-                  {/* End marker */}
-                  <mesh position={[endPos, eventY, 0.002]} onClick={() => handleEventClick(event, group.name)}>
-                    <circleGeometry args={[0.05, 16]} />
-                    <meshBasicMaterial color={group.color} />
-                  </mesh>
-                </group>
-              )
-            } else {
-              // Render as a single point for single dates
-              return (
-                <mesh
-                  key={`event-point-${id}`}
-                  position={[startPos - 0.5, eventY, 0.002]}
-                  onClick={() => handleEventClick(event, group.name)}
-                >
-                  <planeGeometry args={[1, 0.5]} />
-                  <meshBasicMaterial color={group.color} />
-                </mesh>
-              )
-            }
-          })}
-        </group>
-      ))}
+        return (
+          <instancedMesh
+            key={group.name}
+            name={`event-group-${group.name}`}
+            ref={ref}
+            args={[undefined, undefined, count]}
+            onClick={onClick}
+          >
+            <planeGeometry args={[1, 0.5]} />
+            <meshBasicMaterial color={color} />
+          </instancedMesh>
+        )
+      })}
     </group>
   )
 }
