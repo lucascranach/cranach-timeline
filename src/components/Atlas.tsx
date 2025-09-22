@@ -178,7 +178,7 @@ const Atlas = () => {
         dashSpeed={dashSpeed}
       />
 
-      <group position={[0, -1, 0]}>
+      <group position={[0, 0, 0]}>
         {/* <TimelineAxis
           yearKeys={yearKeys}
           yearPositions={yearPositions}

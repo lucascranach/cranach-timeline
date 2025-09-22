@@ -1,5 +1,6 @@
-import { useMemo, useRef, useLayoutEffect, useCallback } from "react"
+import { useMemo, useRef, useLayoutEffect, useCallback, useEffect } from "react"
 import * as THREE from "three"
+import { useControls } from "leva"
 
 interface EventData {
   startDate: string
@@ -89,11 +90,18 @@ const Events = ({ eventGroups, yearPositions, thumbnailHeight, gapBetweenGroups 
   // Position events below the timeline
   const eventBaseY = -thumbnailHeight * 0.5 - 0.3
 
-  // Create pill (rounded rectangle) geometry once (width 1, height 0.5, radius 0.25)
+  // Leva controls for pill size
+  const { pillWidth, pillHeight, pillRadius } = useControls("Event Pills", {
+    pillWidth: { value: 1, min: 0.2, max: 3, step: 0.05 },
+    pillHeight: { value: 1.5, min: 0.1, max: 1.5, step: 0.05 },
+    pillRadius: { value: 1.0, min: 0, max: 1, step: 0.01 },
+  })
+
+  // Create pill geometry from controls
   const pillGeometry = useMemo(() => {
-    const width = 1
-    const height = 0.5
-    const r = Math.min(0.25, width / 2, height / 2)
+    const width = pillWidth
+    const height = pillHeight
+    const r = Math.min(pillRadius, width / 2, height / 2)
     const shape = new THREE.Shape()
     const x = -width / 2
     const y = -height / 2
@@ -107,7 +115,9 @@ const Events = ({ eventGroups, yearPositions, thumbnailHeight, gapBetweenGroups 
     shape.lineTo(x, y + r)
     shape.quadraticCurveTo(x, y, x + r, y)
     return new THREE.ShapeGeometry(shape)
-  }, [])
+  }, [pillWidth, pillHeight, pillRadius])
+
+  useEffect(() => () => pillGeometry.dispose(), [pillGeometry])
 
   return (
     <group name="timeline-events">
@@ -123,14 +133,15 @@ const Events = ({ eventGroups, yearPositions, thumbnailHeight, gapBetweenGroups 
           group.processedEvents.forEach((processedEvent, i) => {
             const { startPos } = processedEvent
             const eventY = eventBaseY - group.yOffset
-            dummy.position.set(startPos - 0.5, eventY, 0.002)
+            // Align right edge with timeline position
+            dummy.position.set(startPos - pillWidth, eventY, 0.002)
             dummy.rotation.set(0, 0, 0)
-            dummy.scale.set(1, 1, 1) // geometry already sized
+            dummy.scale.set(1, 1, 1)
             dummy.updateMatrix()
             ref.current!.setMatrixAt(i, dummy.matrix)
           })
           ref.current.instanceMatrix.needsUpdate = true
-        }, [group.processedEvents, eventBaseY, group.yOffset])
+        }, [group.processedEvents, eventBaseY, group.yOffset, pillWidth])
 
         const onClick = useCallback(
           (e) => {
