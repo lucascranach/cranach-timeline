@@ -1,4 +1,4 @@
-import { useMemo, useRef, useLayoutEffect, useCallback, useEffect } from "react"
+import { useMemo, useRef, useLayoutEffect, useCallback, useEffect, useState } from "react"
 import * as THREE from "three"
 import { useControls } from "leva"
 
@@ -82,6 +82,9 @@ const Events = ({ eventGroups, yearPositions, thumbnailHeight, gapBetweenGroups 
     })
   }, [eventGroups, yearPositions, gapBetweenGroups])
 
+  // Selection state: which event (by group + instance index) is currently selected
+  const [selection, setSelection] = useState<{ group: string; instance: number } | null>(null)
+
   // Handle click on event
   const handleEventClick = (eventData: EventData, groupName: string) => {
     console.log(`${groupName} event clicked:`, eventData.description)
@@ -148,10 +151,47 @@ const Events = ({ eventGroups, yearPositions, thumbnailHeight, gapBetweenGroups 
             e.stopPropagation()
             const instanceId = e.instanceId
             const data = group.processedEvents[instanceId]
-            if (data) handleEventClick(data.event, group.name)
+            if (data) {
+              handleEventClick(data.event, group.name)
+              setSelection((prev) => {
+                // Optional toggle off if clicking the already-selected event
+                if (prev && prev.group === group.name && prev.instance === instanceId) return null
+                return { group: group.name, instance: instanceId }
+              })
+            }
           },
           [group]
         )
+
+        // Base (default) color is gray; highlight uses the group's configured color (fallback to #FEB701)
+        const baseColor = new THREE.Color("#808080")
+        const highlightColor = new THREE.Color(group.color || "#FEB701")
+
+        // Initial color setup (all base color)
+        useLayoutEffect(() => {
+          if (!ref.current) return
+          for (let i = 0; i < count; i++) {
+            ref.current.setColorAt(i, baseColor)
+          }
+          ref.current.instanceColor!.needsUpdate = true
+        }, [count, baseColor])
+
+        // Update colors when selection changes
+        useLayoutEffect(() => {
+          if (!ref.current) return
+          // If this group is selected, color ALL instances (including the clicked one) red
+          if (selection && selection.group === group.name) {
+            for (let i = 0; i < count; i++) {
+              ref.current.setColorAt(i, highlightColor)
+            }
+          } else {
+            // Reset to base color (either no selection or different group selected means no highlight here)
+            for (let i = 0; i < count; i++) {
+              ref.current.setColorAt(i, baseColor)
+            }
+          }
+          ref.current.instanceColor!.needsUpdate = true
+        }, [selection, count, group.name, baseColor, highlightColor])
 
         return (
           <instancedMesh
@@ -160,9 +200,17 @@ const Events = ({ eventGroups, yearPositions, thumbnailHeight, gapBetweenGroups 
             ref={ref}
             args={[undefined, undefined, count]}
             onClick={onClick}
+            onPointerOver={(e) => {
+              e.stopPropagation()
+              document.body.style.cursor = "pointer"
+            }}
+            onPointerOut={() => {
+              document.body.style.cursor = "auto"
+            }}
+            frustumCulled={false}
           >
             <primitive object={pillGeometry} attach="geometry" />
-            <meshBasicMaterial color={color} />
+            <meshBasicMaterial vertexColors />
           </instancedMesh>
         )
       })}
