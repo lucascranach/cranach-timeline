@@ -60,33 +60,19 @@ const Events = ({ eventGroups, yearPositions, thumbnailHeight, gapBetweenGroups 
     return lowerPos + t * (upperPos - lowerPos)
   }
 
-  // Process event groups into renderable data
+  // Process event groups into renderable data (single point events only, no ranges)
   const processedEventGroups = useMemo(() => {
     return eventGroups.map((group, groupIndex) => {
       const processedEvents = group.events.map((event, eventIndex) => {
         const startYear = getYearFromDate(event.startDate)
         const startPos = getPositionForYear(startYear)
-
-        let endPos = null
-        let isRange = false
-
-        if (event.endDate && event.endDate.trim() !== "") {
-          const endYear = getYearFromDate(event.endDate)
-          endPos = getPositionForYear(endYear)
-          isRange = true
-        }
-
         return {
           id: `${groupIndex}-${eventIndex}`,
           startPos,
-          endPos,
-          isRange,
           event,
           startYear,
-          endYear: isRange ? getYearFromDate(event.endDate!) : null,
         }
       })
-
       return {
         ...group,
         processedEvents,
@@ -103,28 +89,43 @@ const Events = ({ eventGroups, yearPositions, thumbnailHeight, gapBetweenGroups 
   // Position events below the timeline
   const eventBaseY = -thumbnailHeight * 0.5 - 0.3
 
-  // For each group we create an instanced mesh
+  // Create pill (rounded rectangle) geometry once (width 1, height 0.5, radius 0.25)
+  const pillGeometry = useMemo(() => {
+    const width = 1
+    const height = 0.5
+    const r = Math.min(0.25, width / 2, height / 2)
+    const shape = new THREE.Shape()
+    const x = -width / 2
+    const y = -height / 2
+    shape.moveTo(x + r, y)
+    shape.lineTo(x + width - r, y)
+    shape.quadraticCurveTo(x + width, y, x + width, y + r)
+    shape.lineTo(x + width, y + height - r)
+    shape.quadraticCurveTo(x + width, y + height, x + width - r, y + height)
+    shape.lineTo(x + r, y + height)
+    shape.quadraticCurveTo(x, y + height, x, y + height - r)
+    shape.lineTo(x, y + r)
+    shape.quadraticCurveTo(x, y, x + r, y)
+    return new THREE.ShapeGeometry(shape)
+  }, [])
+
   return (
     <group name="timeline-events">
       {processedEventGroups.map((group) => {
         const count = group.processedEvents.length
+        if (count === 0) return null
         const ref = useRef<THREE.InstancedMesh | null>(null)
         const color = new THREE.Color(group.color)
         const dummy = new THREE.Object3D()
-        const tempMatrix = new THREE.Matrix4()
 
         useLayoutEffect(() => {
           if (!ref.current) return
           group.processedEvents.forEach((processedEvent, i) => {
-            const { startPos, endPos, isRange } = processedEvent
+            const { startPos } = processedEvent
             const eventY = eventBaseY - group.yOffset
-
-            const width = isRange && endPos != null ? Math.max(0.0001, endPos - startPos) : 1
-            const centerX = isRange && endPos != null ? startPos + width * 0.5 : startPos
-
-            dummy.position.set(centerX - 0.5, eventY, 0.002) // offset to align like previous
-            dummy.scale.set(width, 0.5, 1)
+            dummy.position.set(startPos - 0.5, eventY, 0.002)
             dummy.rotation.set(0, 0, 0)
+            dummy.scale.set(1, 1, 1) // geometry already sized
             dummy.updateMatrix()
             ref.current!.setMatrixAt(i, dummy.matrix)
           })
@@ -135,7 +136,8 @@ const Events = ({ eventGroups, yearPositions, thumbnailHeight, gapBetweenGroups 
           (e) => {
             e.stopPropagation()
             const instanceId = e.instanceId
-            group.processedEvents[instanceId] && handleEventClick(group.processedEvents[instanceId].event, group.name)
+            const data = group.processedEvents[instanceId]
+            if (data) handleEventClick(data.event, group.name)
           },
           [group]
         )
@@ -148,7 +150,7 @@ const Events = ({ eventGroups, yearPositions, thumbnailHeight, gapBetweenGroups 
             args={[undefined, undefined, count]}
             onClick={onClick}
           >
-            <planeGeometry args={[1, 0.5]} />
+            <primitive object={pillGeometry} attach="geometry" />
             <meshBasicMaterial color={color} />
           </instancedMesh>
         )
