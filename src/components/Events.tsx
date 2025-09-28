@@ -1,4 +1,5 @@
 import { useMemo, useRef, useLayoutEffect, useCallback, useEffect, useState } from "react"
+import { useFrame } from "@react-three/fiber"
 import * as THREE from "three"
 import { useControls } from "leva"
 
@@ -82,8 +83,9 @@ const Events = ({ eventGroups, yearPositions, thumbnailHeight, gapBetweenGroups 
     })
   }, [eventGroups, yearPositions, gapBetweenGroups])
 
-  // Selection state: which event (by group + instance index) is currently selected
+  // Selection (clicked) state & hover state
   const [selection, setSelection] = useState<{ group: string; instance: number } | null>(null)
+  const [hovered, setHovered] = useState<{ group: string; instance: number } | null>(null)
 
   // Handle click on event
   const handleEventClick = (eventData: EventData, groupName: string) => {
@@ -131,12 +133,12 @@ const Events = ({ eventGroups, yearPositions, thumbnailHeight, gapBetweenGroups 
         const color = new THREE.Color(group.color)
         const dummy = new THREE.Object3D()
 
+        // Initial placement (scale 1). Animated scaling handled in useFrame below.
         useLayoutEffect(() => {
           if (!ref.current) return
           group.processedEvents.forEach((processedEvent, i) => {
             const { startPos } = processedEvent
             const eventY = eventBaseY - group.yOffset
-            // Align right edge with timeline position
             dummy.position.set(startPos - pillWidth, eventY, 0.002)
             dummy.rotation.set(0, 0, 0)
             dummy.scale.set(1, 1, 1)
@@ -145,6 +147,40 @@ const Events = ({ eventGroups, yearPositions, thumbnailHeight, gapBetweenGroups 
           })
           ref.current.instanceMatrix.needsUpdate = true
         }, [group.processedEvents, eventBaseY, group.yOffset, pillWidth])
+
+        // Per-instance current scales for smooth animation
+        const instanceScalesRef = useRef<Float32Array>(new Float32Array(count).fill(1))
+        if (!instanceScalesRef.current || instanceScalesRef.current.length !== count) {
+          instanceScalesRef.current = new Float32Array(count).fill(1)
+        }
+
+        // Animate scale toward target (2 if hovered or selected, else 1)
+        useFrame(() => {
+          if (!ref.current) return
+          let anyChanged = false
+          const scales = instanceScalesRef.current!
+          for (let i = 0; i < count; i++) {
+            const active =
+              (selection && selection.group === group.name && selection.instance === i) ||
+              (hovered && hovered.group === group.name && hovered.instance === i)
+            const target = active ? 2 : 1
+            const current = scales[i]
+            const newScale = THREE.MathUtils.damp(current, target, 6, 1 / 60) // approx ease in/out
+            if (Math.abs(newScale - current) > 0.0005) {
+              scales[i] = newScale
+              // Rebuild matrix only if scale changed
+              const { startPos } = group.processedEvents[i]
+              const eventY = eventBaseY - group.yOffset
+              dummy.position.set(startPos - pillWidth, eventY, 0.002)
+              dummy.rotation.set(0, 0, 0)
+              dummy.scale.set(newScale, newScale, newScale)
+              dummy.updateMatrix()
+              ref.current.setMatrixAt(i, dummy.matrix)
+              anyChanged = true
+            }
+          }
+          if (anyChanged) ref.current.instanceMatrix.needsUpdate = true
+        })
 
         const onClick = useCallback(
           (e) => {
@@ -164,7 +200,7 @@ const Events = ({ eventGroups, yearPositions, thumbnailHeight, gapBetweenGroups 
         )
 
         // Base (default) color is gray; highlight uses the group's configured color (fallback to #FEB701)
-        const baseColor = new THREE.Color("#808080")
+        const baseColor = new THREE.Color("#b4b4b4")
         const highlightColor = new THREE.Color(group.color || "#FEB701")
 
         // Initial color setup (all base color)
@@ -200,12 +236,18 @@ const Events = ({ eventGroups, yearPositions, thumbnailHeight, gapBetweenGroups 
             ref={ref}
             args={[undefined, undefined, count]}
             onClick={onClick}
-            onPointerOver={(e) => {
+            onPointerMove={(e) => {
               e.stopPropagation()
               document.body.style.cursor = "pointer"
+              const instanceId = e.instanceId
+              if (instanceId !== undefined) {
+                setHovered({ group: group.name, instance: instanceId })
+              }
             }}
-            onPointerOut={() => {
+            onPointerOut={(e) => {
+              e.stopPropagation()
               document.body.style.cursor = "auto"
+              setHovered((prev) => (prev && prev.group === group.name ? null : prev))
             }}
             frustumCulled={false}
           >
