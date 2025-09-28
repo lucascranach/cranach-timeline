@@ -3,7 +3,7 @@ import * as THREE from "three"
 import CameraPlane from "./CameraPlane"
 import { AtlasShaderMaterialTSL } from "@/shader/tsl/AtlasShaderMaterialTSL"
 import { DecadeDiagonalBackground } from "@/shader/tsl/DecadeDiagonalShaderTSL"
-import { useMemo } from "react"
+import { useMemo, useState, useCallback, useEffect, useRef } from "react"
 import { useAtlasControls } from "@/hooks/useAtlasControls"
 import { useAtlasData } from "@/hooks/useAtlasData"
 import { useAtlasGeometry } from "@/hooks/useAtlasGeometry"
@@ -12,7 +12,7 @@ import TimelineAxis from "./TimelineAxis"
 import YearLabels from "./YearLabels"
 import ThumbnailMesh from "./ThumbnailMesh"
 import FallbackUI from "./FallbackUI"
-import Events from "./Events"
+import Events, { ProcessedEventGroup } from "./Events"
 import { useEvents } from "@/hooks/useEvents"
 
 // Native InstancedMesh replacement for previous createInstances usage
@@ -91,6 +91,112 @@ const Atlas = () => {
 
   // Load events data
   const { eventGroups } = useEvents(EVENT_FILE_CONFIGS)
+
+  // Processed groups reference (from Events child)
+  const processedGroupsRef = useRef<ProcessedEventGroup[]>([])
+  const [selection, setSelection] = useState<{ groupIndex: number; eventIndex: number } | null>(null)
+
+  // Helper to dispatch camera center event
+  const centerOnX = useCallback((x: number) => {
+    const evt = new CustomEvent("timeline-center", { detail: { x } })
+    window.dispatchEvent(evt)
+  }, [])
+
+  // When selection changes, auto center
+  useEffect(() => {
+    if (!selection) return
+    const group = processedGroupsRef.current[selection.groupIndex]
+    if (!group) return
+    const ev = group.processedEvents[selection.eventIndex]
+    if (!ev) return
+    centerOnX(ev.startPos)
+  }, [selection, centerOnX])
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return
+      const target = e.target as HTMLElement
+      const tag = target?.tagName
+      if (tag === "INPUT" || tag === "TEXTAREA" || target?.isContentEditable) return
+      if (!processedGroupsRef.current.length) return
+
+      const maxGroups = processedGroupsRef.current.length
+      let newSel = selection
+
+      const moveHorizontal = (dir: 1 | -1) => {
+        if (!newSel) {
+          // Initialize at first available event
+          for (let gi = 0; gi < maxGroups; gi++) {
+            const g = processedGroupsRef.current[gi]
+            if (g.processedEvents.length) {
+              newSel = { groupIndex: gi, eventIndex: dir === 1 ? 0 : g.processedEvents.length - 1 }
+              return
+            }
+          }
+          return
+        }
+        const g = processedGroupsRef.current[newSel.groupIndex]
+        if (!g) return
+        const count = g.processedEvents.length
+        if (!count) return
+        let idx = newSel.eventIndex + dir
+        if (idx < 0) idx = 0
+        if (idx > count - 1) idx = count - 1
+        newSel = { groupIndex: newSel.groupIndex, eventIndex: idx }
+      }
+
+      const moveVertical = (dir: 1 | -1) => {
+        if (!newSel) {
+          // initialize at first event of first group
+          moveHorizontal(1)
+          return
+        }
+        let gi = newSel.groupIndex + dir
+        if (gi < 0) gi = 0
+        if (gi > maxGroups - 1) gi = maxGroups - 1
+        const g = processedGroupsRef.current[gi]
+        if (!g || !g.processedEvents.length) return
+        // Try to keep same eventIndex if possible
+        let ei = newSel.eventIndex
+        if (ei > g.processedEvents.length - 1) ei = g.processedEvents.length - 1
+        newSel = { groupIndex: gi, eventIndex: ei }
+      }
+
+      let handled = false
+      switch (e.key) {
+        case "ArrowRight":
+          moveHorizontal(1)
+          handled = true
+          break
+        case "ArrowLeft":
+          moveHorizontal(-1)
+          handled = true
+          break
+        case "ArrowDown":
+          moveVertical(1)
+          handled = true
+          break
+        case "ArrowUp":
+          moveVertical(-1)
+          handled = true
+          break
+      }
+      if (handled) {
+        e.preventDefault()
+        if (newSel !== selection) setSelection(newSel)
+      }
+    }
+    window.addEventListener("keydown", handleKey)
+    return () => window.removeEventListener("keydown", handleKey)
+  }, [selection])
+
+  const handleEventSelect = useCallback(({ group, instance }: { group: string; instance: number }) => {
+    const gi = processedGroupsRef.current.findIndex((g) => g.name === group)
+    if (gi !== -1) {
+      setSelection({ groupIndex: gi, eventIndex: instance })
+    }
+  }, [])
 
   // Handle thumbnail click
   const handleThumbnailClick = (index: number, imageData?: AtlasImage) => {
@@ -197,6 +303,15 @@ const Atlas = () => {
           yearPositions={yearPositions}
           thumbnailHeight={thumbnailHeight}
           gapBetweenGroups={eventGap}
+          selection={
+            selection
+              ? { group: processedGroupsRef.current[selection.groupIndex]?.name, instance: selection.eventIndex }
+              : null
+          }
+          onSelect={({ group, instance }) => handleEventSelect({ group, instance })}
+          onProcessed={(groups) => {
+            processedGroupsRef.current = groups
+          }}
         />
       </group>
     </group>

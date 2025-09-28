@@ -15,14 +15,48 @@ interface EventGroup {
   events: EventData[]
 }
 
+interface ProcessedEvent {
+  id: string
+  startPos: number
+  event: EventData
+  startYear: number
+}
+
+export interface ProcessedEventGroup extends EventGroup {
+  processedEvents: ProcessedEvent[]
+  yOffset: number
+}
+
 interface EventsProps {
   eventGroups: EventGroup[]
   yearPositions: Record<string, number>
   thumbnailHeight: number
   gapBetweenGroups?: number
+  /** Currently selected event, managed externally */
+  selection?: { group: string; instance: number } | null
+  /** Callback on select (click) */
+  onSelect?: (payload: {
+    group: string
+    instance: number
+    processed: ProcessedEvent
+    groupData: ProcessedEventGroup
+  }) => void
+  /** Optional external hover handler */
+  onHoverChange?: (payload: { group: string; instance: number } | null) => void
+  /** Expose processed data */
+  onProcessed?: (groups: ProcessedEventGroup[]) => void
 }
 
-const Events = ({ eventGroups, yearPositions, thumbnailHeight, gapBetweenGroups = 0.15 }: EventsProps) => {
+const Events = ({
+  eventGroups,
+  yearPositions,
+  thumbnailHeight,
+  gapBetweenGroups = 0.15,
+  selection: externalSelection,
+  onSelect,
+  onHoverChange,
+  onProcessed,
+}: EventsProps) => {
   // Convert date string to year
   const getYearFromDate = (dateString: string): number => {
     return new Date(dateString).getFullYear()
@@ -63,9 +97,9 @@ const Events = ({ eventGroups, yearPositions, thumbnailHeight, gapBetweenGroups 
   }
 
   // Process event groups into renderable data (single point events only, no ranges)
-  const processedEventGroups = useMemo(() => {
+  const processedEventGroups: ProcessedEventGroup[] = useMemo(() => {
     return eventGroups.map((group, groupIndex) => {
-      const processedEvents = group.events.map((event, eventIndex) => {
+      const processedEvents: ProcessedEvent[] = group.events.map((event, eventIndex) => {
         const startYear = getYearFromDate(event.startDate)
         const startPos = getPositionForYear(startYear)
         return {
@@ -83,13 +117,23 @@ const Events = ({ eventGroups, yearPositions, thumbnailHeight, gapBetweenGroups 
     })
   }, [eventGroups, yearPositions, gapBetweenGroups])
 
+  // Expose processed groups upward when they change
+  useEffect(() => {
+    onProcessed?.(processedEventGroups)
+  }, [processedEventGroups, onProcessed])
+
   // Selection (clicked) state & hover state
-  const [selection, setSelection] = useState<{ group: string; instance: number } | null>(null)
+  // Internal fallback selection if not controlled
+  const [internalSelection, setInternalSelection] = useState<{ group: string; instance: number } | null>(null)
+  const selection = externalSelection !== undefined ? externalSelection : internalSelection
   const [hovered, setHovered] = useState<{ group: string; instance: number } | null>(null)
 
   // Handle click on event
-  const handleEventClick = (eventData: EventData, groupName: string) => {
-    console.log(`${groupName} event clicked:`, eventData.description)
+  const handleEventClick = (processed: ProcessedEvent, groupData: ProcessedEventGroup, instanceId: number) => {
+    onSelect?.({ group: groupData.name, instance: instanceId, processed, groupData })
+    if (externalSelection === undefined) {
+      setInternalSelection({ group: groupData.name, instance: instanceId })
+    }
   }
 
   // Position events below the timeline
@@ -186,14 +230,9 @@ const Events = ({ eventGroups, yearPositions, thumbnailHeight, gapBetweenGroups 
           (e) => {
             e.stopPropagation()
             const instanceId = e.instanceId
-            const data = group.processedEvents[instanceId]
-            if (data) {
-              handleEventClick(data.event, group.name)
-              setSelection((prev) => {
-                // Optional toggle off if clicking the already-selected event
-                if (prev && prev.group === group.name && prev.instance === instanceId) return null
-                return { group: group.name, instance: instanceId }
-              })
+            const processed = group.processedEvents[instanceId]
+            if (processed) {
+              handleEventClick(processed, group, instanceId)
             }
           },
           [group]
@@ -241,13 +280,16 @@ const Events = ({ eventGroups, yearPositions, thumbnailHeight, gapBetweenGroups 
               document.body.style.cursor = "pointer"
               const instanceId = e.instanceId
               if (instanceId !== undefined) {
-                setHovered({ group: group.name, instance: instanceId })
+                const payload = { group: group.name, instance: instanceId }
+                setHovered(payload)
+                onHoverChange?.(payload)
               }
             }}
             onPointerOut={(e) => {
               e.stopPropagation()
               document.body.style.cursor = "auto"
               setHovered((prev) => (prev && prev.group === group.name ? null : prev))
+              onHoverChange?.(null)
             }}
             frustumCulled={false}
           >

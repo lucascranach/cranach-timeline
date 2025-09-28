@@ -53,8 +53,44 @@ const TimelineControls = () => {
     const canvas = gl.domElement
     canvas.addEventListener("wheel", handleWheel, { passive: false })
 
+    // Smooth centering logic
+    let animId: number | null = null
+    const centerState = { active: false, targetX: 0 }
+
+    const animateCenter = () => {
+      if (!centerState.active) return
+      const current = camera.position.x
+      const target = centerState.targetX
+      const delta = target - current
+      if (Math.abs(delta) < 0.01) {
+        camera.position.x = target
+        controls.target.x = target
+        centerState.active = false
+        controls.update()
+        return
+      }
+      const step = delta * 0.15 // damping factor
+      camera.position.x += step
+      controls.target.x += step
+      controls.update()
+      animId = requestAnimationFrame(animateCenter)
+    }
+
+    const handleCenterEvent = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { x?: number }
+      if (typeof detail?.x === "number") {
+        centerState.targetX = detail.x
+        centerState.active = true
+        if (animId) cancelAnimationFrame(animId)
+        animId = requestAnimationFrame(animateCenter)
+      }
+    }
+    window.addEventListener("timeline-center", handleCenterEvent as any)
+
     return () => {
       canvas.removeEventListener("wheel", handleWheel as any)
+      window.removeEventListener("timeline-center", handleCenterEvent as any)
+      if (animId) cancelAnimationFrame(animId)
     }
   }, [gl, camera])
 
