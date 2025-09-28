@@ -127,6 +127,7 @@ const Events = ({
   const [internalSelection, setInternalSelection] = useState<{ group: string; instance: number } | null>(null)
   const selection = externalSelection !== undefined ? externalSelection : internalSelection
   const [hovered, setHovered] = useState<{ group: string; instance: number } | null>(null)
+  const lastActiveRef = useRef<string | null>(null)
 
   // Handle click on event
   const handleEventClick = (processed: ProcessedEvent, groupData: ProcessedEventGroup, instanceId: number) => {
@@ -135,6 +136,27 @@ const Events = ({
       setInternalSelection({ group: groupData.name, instance: instanceId })
     }
   }
+
+  useEffect(() => {
+    if (!selection) {
+      lastActiveRef.current = null
+      return
+    }
+
+    const groupData = processedEventGroups.find((g) => g.name === selection.group)
+    const processed = groupData?.processedEvents[selection.instance]
+    if (!processed) return
+
+    const key = `${selection.group}-${selection.instance}`
+    if (lastActiveRef.current === key) return
+
+    lastActiveRef.current = key
+    console.log("Active event", {
+      group: selection.group,
+      event: processed.event,
+      startYear: processed.startYear,
+    })
+  }, [selection, processedEventGroups])
 
   // Position events below the timeline
   const eventBaseY = -thumbnailHeight * 0.5 - 0.3
