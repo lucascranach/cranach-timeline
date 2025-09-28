@@ -47,6 +47,80 @@ interface EventsProps {
   onProcessed?: (groups: ProcessedEventGroup[]) => void
 }
 
+const ACTIVE_EVENT_SCALE = 2
+const OUTLINE_PADDING_X = 0.2
+const OUTLINE_PADDING_Y = 0.1
+const OUTLINE_THICKNESS = 0.05
+
+type GroupBounds = {
+  centerX: number
+  centerY: number
+  width: number
+  height: number
+}
+
+interface GroupOutlineProps {
+  width: number
+  height: number
+  position: [number, number, number]
+  color: THREE.ColorRepresentation
+  thickness?: number
+}
+
+const GroupOutline = ({ width, height, position, color, thickness = OUTLINE_THICKNESS }: GroupOutlineProps) => {
+  const groupRef = useRef<THREE.Group>(null)
+  const materialRef = useRef<THREE.MeshBasicMaterial | null>(null)
+
+  if (!materialRef.current) {
+    materialRef.current = new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity: 0.65,
+      depthWrite: false,
+      depthTest: false,
+    })
+  }
+
+  useEffect(() => {
+    const material = materialRef.current
+    return () => {
+      material?.dispose()
+    }
+  }, [])
+
+  useEffect(() => {
+    materialRef.current?.color.set(color)
+  }, [color])
+
+  useEffect(() => {
+    const group = groupRef.current
+    if (!group) return
+    group.traverse((obj) => {
+      obj.raycast = () => null
+    })
+  }, [])
+
+  const halfWidth = width / 2
+  const halfHeight = height / 2
+
+  return (
+    <group ref={groupRef} position={position} renderOrder={1}>
+      <mesh position={[0, halfHeight, 0]} material={materialRef.current!}>
+        <planeGeometry args={[width, thickness]} />
+      </mesh>
+      <mesh position={[0, -halfHeight, 0]} material={materialRef.current!}>
+        <planeGeometry args={[width, thickness]} />
+      </mesh>
+      <mesh position={[-halfWidth, 0, 0]} material={materialRef.current!}>
+        <planeGeometry args={[thickness, height]} />
+      </mesh>
+      <mesh position={[halfWidth, 0, 0]} material={materialRef.current!}>
+        <planeGeometry args={[thickness, height]} />
+      </mesh>
+    </group>
+  )
+}
+
 const Events = ({
   eventGroups,
   yearPositions,
@@ -190,13 +264,49 @@ const Events = ({
 
   useEffect(() => () => pillGeometry.dispose(), [pillGeometry])
 
+  const groupBounds = useMemo<(GroupBounds | null)[]>(() => {
+    return processedEventGroups.map((group) => {
+      const count = group.processedEvents.length
+      if (!count) return null
+
+      let minLeft = Infinity
+      let maxRight = -Infinity
+      const halfWidth = (pillWidth * ACTIVE_EVENT_SCALE) / 2
+
+      group.processedEvents.forEach((processedEvent) => {
+        const centerX = processedEvent.startPos - pillWidth
+        const left = centerX - halfWidth
+        const right = centerX + halfWidth
+        if (left < minLeft) minLeft = left
+        if (right > maxRight) maxRight = right
+      })
+
+      if (!isFinite(minLeft) || !isFinite(maxRight)) {
+        return null
+      }
+
+      minLeft -= OUTLINE_PADDING_X
+      maxRight += OUTLINE_PADDING_X
+
+      const baseCenterY = eventBaseY - group.yOffset
+      const halfHeight = (pillHeight * ACTIVE_EVENT_SCALE) / 2 + OUTLINE_PADDING_Y
+
+      return {
+        centerX: (minLeft + maxRight) / 2,
+        centerY: baseCenterY,
+        width: maxRight - minLeft,
+        height: halfHeight * 2,
+      }
+    })
+  }, [processedEventGroups, pillWidth, pillHeight, eventBaseY])
+
   return (
     <group name="timeline-events">
-      {processedEventGroups.map((group) => {
+      {processedEventGroups.map((group, groupIndex) => {
         const count = group.processedEvents.length
         if (count === 0) return null
+        const bounds = groupBounds[groupIndex]
         const ref = useRef<THREE.InstancedMesh | null>(null)
-        const color = new THREE.Color(group.color)
         const dummy = new THREE.Object3D()
 
         // Initial placement (scale 1). Animated scaling handled in useFrame below.
@@ -229,7 +339,7 @@ const Events = ({
             const active =
               (selection && selection.group === group.name && selection.instance === i) ||
               (hovered && hovered.group === group.name && hovered.instance === i)
-            const target = active ? 2 : 1
+            const target = active ? ACTIVE_EVENT_SCALE : 1
             const current = scales[i]
             const newScale = THREE.MathUtils.damp(current, target, 6, 1 / 60) // approx ease in/out
             if (Math.abs(newScale - current) > 0.0005) {
@@ -263,6 +373,7 @@ const Events = ({
         // Base (default) color is gray; highlight uses the group's configured color (fallback to #FEB701)
         const baseColor = new THREE.Color("#b4b4b4")
         const highlightColor = new THREE.Color(group.color || "#FEB701")
+        const outlineColor = highlightColor.clone().lerp(new THREE.Color("#ffffff"), 0.4)
 
         // Initial color setup (all base color)
         useLayoutEffect(() => {
@@ -291,33 +402,42 @@ const Events = ({
         }, [selection, count, group.name, baseColor, highlightColor])
 
         return (
-          <instancedMesh
-            key={group.name}
-            name={`event-group-${group.name}`}
-            ref={ref}
-            args={[undefined, undefined, count]}
-            onClick={onClick}
-            onPointerMove={(e) => {
-              e.stopPropagation()
-              document.body.style.cursor = "pointer"
-              const instanceId = e.instanceId
-              if (instanceId !== undefined) {
-                const payload = { group: group.name, instance: instanceId }
-                setHovered(payload)
-                onHoverChange?.(payload)
-              }
-            }}
-            onPointerOut={(e) => {
-              e.stopPropagation()
-              document.body.style.cursor = "auto"
-              setHovered((prev) => (prev && prev.group === group.name ? null : prev))
-              onHoverChange?.(null)
-            }}
-            frustumCulled={false}
-          >
-            <primitive object={pillGeometry} attach="geometry" />
-            <meshBasicMaterial vertexColors />
-          </instancedMesh>
+          <group key={group.name} name={`event-group-${group.name}`}>
+            {bounds ? (
+              <GroupOutline
+                width={bounds.width}
+                height={bounds.height}
+                position={[bounds.centerX, bounds.centerY, 0.001]}
+                color={outlineColor}
+              />
+            ) : null}
+            <instancedMesh
+              name={`event-group-${group.name}-instances`}
+              ref={ref}
+              args={[undefined, undefined, count]}
+              onClick={onClick}
+              onPointerMove={(e) => {
+                e.stopPropagation()
+                document.body.style.cursor = "pointer"
+                const instanceId = e.instanceId
+                if (instanceId !== undefined) {
+                  const payload = { group: group.name, instance: instanceId }
+                  setHovered(payload)
+                  onHoverChange?.(payload)
+                }
+              }}
+              onPointerOut={(e) => {
+                e.stopPropagation()
+                document.body.style.cursor = "auto"
+                setHovered((prev) => (prev && prev.group === group.name ? null : prev))
+                onHoverChange?.(null)
+              }}
+              frustumCulled={false}
+            >
+              <primitive object={pillGeometry} attach="geometry" />
+              <meshBasicMaterial vertexColors />
+            </instancedMesh>
+          </group>
         )
       })}
     </group>
