@@ -2,6 +2,7 @@ import { useMemo, useRef, useLayoutEffect, useCallback, useEffect, useState } fr
 import { useFrame } from "@react-three/fiber"
 import * as THREE from "three"
 import { useControls } from "leva"
+import { Html } from "@react-three/drei"
 
 interface EventData {
   startDate: string
@@ -118,6 +119,45 @@ const GroupOutline = ({ width, height, position, color, thickness = OUTLINE_THIC
         <planeGeometry args={[thickness, height]} />
       </mesh>
     </group>
+  )
+}
+
+interface GroupLabelProps {
+  text: string
+  position: [number, number, number]
+  color: THREE.ColorRepresentation
+  fontSize?: number
+}
+
+const GroupLabel = ({ text, position, color, fontSize = 14 }: GroupLabelProps) => {
+  let colorString: string
+
+  if (typeof color === "string") {
+    colorString = color
+  } else if (color instanceof THREE.Color) {
+    colorString = `rgb(${Math.round(color.r * 255)}, ${Math.round(color.g * 255)}, ${Math.round(color.b * 255)})`
+  } else {
+    colorString = `#${color.toString(16).padStart(6, "0")}`
+  }
+
+  return (
+    <Html
+      position={position}
+      style={{
+        color: colorString,
+        fontSize: `${fontSize}px`,
+        fontFamily: "Arial, sans-serif",
+        fontWeight: "bold",
+        textShadow: "1px 1px 2px rgba(0,0,0,0.5)",
+        pointerEvents: "none",
+        userSelect: "none",
+        whiteSpace: "nowrap",
+        textAlign: "right",
+        transform: "translate(-100%, -50%)",
+      }}
+    >
+      {text}
+    </Html>
   )
 }
 
@@ -404,12 +444,20 @@ const Events = ({
         return (
           <group key={group.name} name={`event-group-${group.name}`}>
             {bounds ? (
-              <GroupOutline
-                width={bounds.width}
-                height={bounds.height}
-                position={[bounds.centerX, bounds.centerY, 0.001]}
-                color={outlineColor}
-              />
+              <>
+                <GroupLabel
+                  text={group.name}
+                  position={[bounds.centerX - bounds.width / 2 - 0.5, bounds.centerY, 0.005]}
+                  color={outlineColor}
+                  fontSize={16}
+                />
+                <GroupOutline
+                  width={bounds.width}
+                  height={bounds.height}
+                  position={[bounds.centerX, bounds.centerY, 0.001]}
+                  color={outlineColor}
+                />
+              </>
             ) : null}
             <instancedMesh
               name={`event-group-${group.name}-instances`}
