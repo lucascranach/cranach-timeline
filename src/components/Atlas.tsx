@@ -1,4 +1,4 @@
-import { useLoader } from "@react-three/fiber"
+import { useLoader, useFrame } from "@react-three/fiber"
 import * as THREE from "three"
 import CameraPlane from "./CameraPlane"
 import { AtlasShaderMaterialTSL } from "@/shader/tsl/AtlasShaderMaterialTSL"
@@ -59,6 +59,12 @@ const EVENT_FILE_CONFIGS = [
   },
 ]
 
+type SelectionState = {
+  groupIndex: number
+  eventIndex: number
+  centerOnSelect?: boolean
+}
+
 const Atlas = () => {
   const atlasTexture = useLoader(THREE.TextureLoader, "/atlas/texture_atlas.webp")
 
@@ -94,7 +100,14 @@ const Atlas = () => {
 
   // Processed groups reference (from Events child)
   const processedGroupsRef = useRef<ProcessedEventGroup[]>([])
-  const [selection, setSelection] = useState<{ groupIndex: number; eventIndex: number } | null>(null)
+  const [selection, setSelection] = useState<SelectionState | null>(null)
+  const selectionRef = useRef<SelectionState | null>(null)
+  const autoSelectBlockRef = useRef<number>(0)
+  const getNow = useCallback(() => (typeof performance !== "undefined" ? performance.now() : Date.now()), [])
+
+  useEffect(() => {
+    selectionRef.current = selection
+  }, [selection])
 
   // Helper to dispatch camera center event
   const centerOnX = useCallback((x: number) => {
@@ -104,13 +117,14 @@ const Atlas = () => {
 
   // When selection changes, auto center
   useEffect(() => {
-    if (!selection) return
+    if (!selection || selection.centerOnSelect === false) return
     const group = processedGroupsRef.current[selection.groupIndex]
     if (!group) return
     const ev = group.processedEvents[selection.eventIndex]
     if (!ev) return
+    autoSelectBlockRef.current = getNow() + 800
     centerOnX(ev.startPos)
-  }, [selection, centerOnX])
+  }, [selection, centerOnX, getNow])
 
   // Keyboard navigation
   useEffect(() => {
@@ -122,7 +136,7 @@ const Atlas = () => {
       if (!processedGroupsRef.current.length) return
 
       const maxGroups = processedGroupsRef.current.length
-      let newSel = selection
+      let newSel: SelectionState | null = selection ? { ...selection, centerOnSelect: true } : null
 
       const moveHorizontal = (dir: 1 | -1) => {
         if (!newSel) {
@@ -130,7 +144,11 @@ const Atlas = () => {
           for (let gi = 0; gi < maxGroups; gi++) {
             const g = processedGroupsRef.current[gi]
             if (g.processedEvents.length) {
-              newSel = { groupIndex: gi, eventIndex: dir === 1 ? 0 : g.processedEvents.length - 1 }
+              newSel = {
+                groupIndex: gi,
+                eventIndex: dir === 1 ? 0 : g.processedEvents.length - 1,
+                centerOnSelect: true,
+              }
               return
             }
           }
@@ -143,7 +161,7 @@ const Atlas = () => {
         let idx = newSel.eventIndex + dir
         if (idx < 0) idx = 0
         if (idx > count - 1) idx = count - 1
-        newSel = { groupIndex: newSel.groupIndex, eventIndex: idx }
+        newSel = { groupIndex: newSel.groupIndex, eventIndex: idx, centerOnSelect: true }
       }
 
       const moveVertical = (dir: 1 | -1) => {
@@ -152,6 +170,10 @@ const Atlas = () => {
           moveHorizontal(1)
           return
         }
+        const prevGroup = processedGroupsRef.current[newSel.groupIndex]
+        const prevEvent = prevGroup?.processedEvents[newSel.eventIndex]
+        const prevPos = prevEvent?.startPos ?? null
+
         let gi = newSel.groupIndex + dir
         if (gi < 0) gi = 0
         if (gi > maxGroups - 1) gi = maxGroups - 1
@@ -159,8 +181,21 @@ const Atlas = () => {
         if (!g || !g.processedEvents.length) return
         // Try to keep same eventIndex if possible
         let ei = newSel.eventIndex
-        if (ei > g.processedEvents.length - 1) ei = g.processedEvents.length - 1
-        newSel = { groupIndex: gi, eventIndex: ei }
+        if (prevPos !== null) {
+          let closestIndex = 0
+          let closestDist = Infinity
+          g.processedEvents.forEach((ev, index) => {
+            const dist = Math.abs(ev.startPos - prevPos)
+            if (dist < closestDist) {
+              closestDist = dist
+              closestIndex = index
+            }
+          })
+          ei = closestIndex
+        } else if (ei > g.processedEvents.length - 1) {
+          ei = g.processedEvents.length - 1
+        }
+        newSel = { groupIndex: gi, eventIndex: ei, centerOnSelect: true }
       }
 
       let handled = false
@@ -184,7 +219,14 @@ const Atlas = () => {
       }
       if (handled) {
         e.preventDefault()
-        if (newSel !== selection) setSelection(newSel)
+        if (
+          !selection ||
+          selection.groupIndex !== newSel?.groupIndex ||
+          selection.eventIndex !== newSel?.eventIndex ||
+          selection.centerOnSelect !== newSel?.centerOnSelect
+        ) {
+          setSelection(newSel)
+        }
       }
     }
     window.addEventListener("keydown", handleKey)
@@ -194,9 +236,47 @@ const Atlas = () => {
   const handleEventSelect = useCallback(({ group, instance }: { group: string; instance: number }) => {
     const gi = processedGroupsRef.current.findIndex((g) => g.name === group)
     if (gi !== -1) {
-      setSelection({ groupIndex: gi, eventIndex: instance })
+      setSelection({ groupIndex: gi, eventIndex: instance, centerOnSelect: true })
     }
   }, [])
+
+  useFrame((state) => {
+    const now = getNow()
+    if (now < autoSelectBlockRef.current) return
+    const groups = processedGroupsRef.current
+    if (!groups.length) return
+
+    const cameraX = state.camera.position.x
+    const current = selectionRef.current
+    let activeGroupIndex = current?.groupIndex ?? -1
+    if (activeGroupIndex < 0 || !groups[activeGroupIndex] || !groups[activeGroupIndex].processedEvents.length) {
+      activeGroupIndex = groups.findIndex((g) => g.processedEvents.length > 0)
+      if (activeGroupIndex === -1) return
+    }
+
+    const activeGroup = groups[activeGroupIndex]
+    if (!activeGroup.processedEvents.length) return
+
+    let bestEventIndex = 0
+    let bestDist = Infinity
+    activeGroup.processedEvents.forEach((ev, eventIndex) => {
+      const dist = Math.abs(ev.startPos - cameraX)
+      if (dist < bestDist) {
+        bestDist = dist
+        bestEventIndex = eventIndex
+      }
+    })
+
+    const best: SelectionState = {
+      groupIndex: activeGroupIndex,
+      eventIndex: bestEventIndex,
+      centerOnSelect: false,
+    }
+
+    if (current && current.groupIndex === best.groupIndex && current.eventIndex === best.eventIndex) return
+
+    setSelection(best)
+  })
 
   // Handle thumbnail click
   const handleThumbnailClick = (index: number, imageData?: AtlasImage) => {
