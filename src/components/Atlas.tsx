@@ -338,7 +338,7 @@ const Atlas = () => {
   return (
     <group position={[0, atlasY, 0]}>
       {/* Vertical decade background */}
-      <CameraPlane offset={[0, -25, -60]} size={[220, 49.1]} color={"#0f0f10"} opacity={0.6} depthTest={true} />
+      <CameraPlane offset={[0, -25, -60]} size={[220, 49.1]} color={"#62646f"} opacity={0.6} depthTest={true} />
       <DecadeDiagonalBackground
         yearKeys={yearKeys}
         yearPositions={yearPositions}
