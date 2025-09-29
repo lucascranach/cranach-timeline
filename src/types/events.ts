@@ -57,6 +57,7 @@ export interface GroupLabelProps {
   position: [number, number, number]
   color: THREE.ColorRepresentation
   fontSize?: number
+  isActive?: boolean
 }
 
 export interface EventGroupRenderProps {

@@ -69,6 +69,7 @@ const EventGroup = ({
   }, [group.processedEvents, pillWidth, pillHeight, eventBaseY, group.yOffset])
 
   const { outlineColor } = createEventColors(group.color)
+  const isGroupActive = selection?.group === group.name
 
   return (
     <group key={group.name} name={`event-group-${group.name}`}>
@@ -79,6 +80,7 @@ const EventGroup = ({
             position={[bounds.centerX - bounds.width / 2 - 0.5, bounds.centerY, 0.005]}
             color={outlineColor}
             fontSize={16}
+            isActive={isGroupActive}
           />
           <GroupOutline
             width={bounds.width}
