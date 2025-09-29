@@ -12,7 +12,8 @@ import TimelineAxis from "./TimelineAxis"
 import YearLabels from "./YearLabels"
 import ThumbnailMesh from "./ThumbnailMesh"
 import FallbackUI from "./FallbackUI"
-import Events, { ProcessedEventGroup } from "./Events"
+import Events from "./events/Events"
+import { ProcessedEventGroup } from "../types/events"
 import { useEvents } from "@/hooks/useEvents"
 
 // Native InstancedMesh replacement for previous createInstances usage
