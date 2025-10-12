@@ -39,22 +39,22 @@ interface AtlasData {
 // Event files configuration with colors
 const EVENT_FILE_CONFIGS = [
   {
-    file: "/events/cranachElderEvents_en.json",
+    file: "/timeline/events/cranachElderEvents_en.json",
     name: "Cranach Elder",
     color: "#FEB701",
   },
   {
-    file: "/events/cranachYoungerEvents_en.json",
+    file: "/timeline/events/cranachYoungerEvents_en.json",
     name: "Cranach Younger",
     color: "#FEB701",
   },
   {
-    file: "/events/historyEvents_en.json",
+    file: "/timeline/events/historyEvents_en.json",
     name: "History",
     color: "#FEB701",
   },
   {
-    file: "/events/lutherEvents_en.json",
+    file: "/timeline/events/lutherEvents_en.json",
     name: "Luther",
     color: "#FEB701",
   },
@@ -67,7 +67,7 @@ type SelectionState = {
 }
 
 const Atlas = () => {
-  const atlasTexture = useLoader(THREE.TextureLoader, "/atlas/texture_atlas.webp")
+  const atlasTexture = useLoader(THREE.TextureLoader, "/timeline/atlas/texture_atlas.webp")
 
   // Use custom hooks for controls and settings
   const controls = useAtlasControls()
@@ -338,7 +338,7 @@ const Atlas = () => {
   return (
     <group position={[0, atlasY, 0]}>
       {/* Vertical decade background */}
-      <CameraPlane offset={[0, -25, -60]} size={[220, 49.1]} color={"#62646f"} opacity={0.6} depthTest={true} />
+      {/* <CameraPlane offset={[0, -25, -60]} size={[220, 49.1]} color={"#62646f"} opacity={0.6} depthTest={true} /> */}
       <DecadeDiagonalBackground
         yearKeys={yearKeys}
         yearPositions={yearPositions}

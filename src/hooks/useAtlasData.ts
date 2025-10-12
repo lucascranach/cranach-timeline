@@ -29,7 +29,7 @@ export const useAtlasData = (yearSpacing: number) => {
 
   // Load atlas data
   useEffect(() => {
-    fetch("/atlas/texture_atlas.json")
+    fetch("/timeline/atlas/texture_atlas.json")
       .then((response) => response.json())
       .then((data) => setAtlasData(data))
       .catch((err) => console.error("Failed to load atlas data:", err))
