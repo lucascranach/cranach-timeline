@@ -1,7 +1,9 @@
 import "./styles/App.css"
 
 import Scene from "./components/Scene"
+import ZoomToggle from "./components/ZoomToggle"
 import { Leva } from "leva"
+import { ZoomProvider, useZoomContext } from "./hooks/useZoomContext"
 
 import styled from "styled-components"
 
@@ -10,21 +12,34 @@ const Title = styled.h1`
   top: 3rem;
   left: 3rem;
   color: white;
+  font-family: "IBMPlexSans", sans-serif;
   font-size: 2rem;
   font-weight: 100;
-  z-index: 10;
+  z-index: 9999;
   margin: 0;
   padding: 0;
+  pointer-events: none;
 `
 
-function App() {
+const AppContent = () => {
+  const { enableZoomStep, setEnableZoomStep } = useZoomContext()
+
   return (
     <>
       <Title>Lucas Cranach Timeline</Title>
+      <ZoomToggle isEnabled={enableZoomStep} onToggle={setEnableZoomStep} />
       <Leva collapsed />
 
       <Scene />
     </>
+  )
+}
+
+function App() {
+  return (
+    <ZoomProvider>
+      <AppContent />
+    </ZoomProvider>
   )
 }
 

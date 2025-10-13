@@ -20,6 +20,7 @@ export interface AtlasControlsConfig {
   dashGap: number
   dashSpeed: number
   atlasY: number
+  zoomMultiplier: number
 }
 
 export const useAtlasControls = () => {
@@ -60,10 +61,15 @@ export const useAtlasControls = () => {
     dashSpeed: { value: 0.0, min: -5, max: 5, step: 0.1, label: "Dash Scroll Speed" },
   })
 
+  const zoomControls = useControls("Zoom Settings", {
+    zoomMultiplier: { value: 2.0, min: 1.5, max: 4, step: 0.1, label: "Zoom Multiplier" },
+  })
+
   return {
     ...thumbnailControls,
     ...timelineControls,
     ...eventControls,
     ...dashControls,
+    ...zoomControls,
   } as AtlasControlsConfig
 }

@@ -8,6 +8,7 @@ import { useAtlasControls } from "@/hooks/useAtlasControls"
 import { useAtlasData } from "@/hooks/useAtlasData"
 import { useAtlasGeometry } from "@/hooks/useAtlasGeometry"
 import { useAtlasTransforms } from "@/hooks/useAtlasTransforms"
+import { useZoomContext } from "@/hooks/useZoomContext"
 import TimelineAxis from "./TimelineAxis"
 import YearLabels from "./YearLabels"
 import ThumbnailMesh from "./ThumbnailMesh"
@@ -71,6 +72,7 @@ const Atlas = () => {
 
   // Use custom hooks for controls and settings
   const controls = useAtlasControls()
+  const { enableZoomStep: enableZoomStepFromContext } = useZoomContext()
 
   const {
     thumbnailWidth,
@@ -91,10 +93,34 @@ const Atlas = () => {
     dashGap,
     dashSpeed,
     atlasY,
+    zoomMultiplier,
   } = controls
 
+  // Use zoom state from context (UI toggle) instead of Leva
+  const enableZoomStep = enableZoomStepFromContext
+
+  console.log("Atlas: enableZoomStep =", enableZoomStep, "zoomMultiplier =", zoomMultiplier)
+
+  // Apply zoom multiplier when zoom step is enabled
+  const effectiveThumbnailWidth = useMemo(() => {
+    const result = enableZoomStep ? thumbnailWidth * zoomMultiplier : thumbnailWidth
+    console.log("Atlas: effectiveThumbnailWidth =", result)
+    return result
+  }, [enableZoomStep, thumbnailWidth, zoomMultiplier])
+
+  const effectiveThumbnailHeight = useMemo(() => {
+    const result = enableZoomStep ? thumbnailHeight * zoomMultiplier : thumbnailHeight
+    console.log("Atlas: effectiveThumbnailHeight =", result)
+    return result
+  }, [enableZoomStep, thumbnailHeight, zoomMultiplier])
+
+  const effectiveYearSpacing = useMemo(
+    () => (enableZoomStep ? yearSpacing * zoomMultiplier : yearSpacing),
+    [enableZoomStep, yearSpacing, zoomMultiplier]
+  )
+
   // Load and process atlas data
-  const { atlasData, sortedImages, groupedByYear, yearKeys, yearPositions } = useAtlasData(yearSpacing)
+  const { atlasData, sortedImages, groupedByYear, yearKeys, yearPositions } = useAtlasData(effectiveYearSpacing)
 
   // Load events data
   const { eventGroups } = useEvents(EVENT_FILE_CONFIGS)
@@ -305,16 +331,16 @@ const Atlas = () => {
   const geometryWithAttributes = useAtlasGeometry(
     atlasData,
     sortedImages,
-    thumbnailWidth,
-    thumbnailHeight,
+    effectiveThumbnailWidth,
+    effectiveThumbnailHeight,
     cropSettings
   )
 
   const transformSettings = {
     columnsPerYear,
     preserveAspectRatio,
-    thumbnailWidth,
-    thumbnailHeight,
+    thumbnailWidth: effectiveThumbnailWidth,
+    thumbnailHeight: effectiveThumbnailHeight,
     rowSpacing,
   }
 
@@ -357,13 +383,13 @@ const Atlas = () => {
           {/* <TimelineAxis
           yearKeys={yearKeys}
           yearPositions={yearPositions}
-          thumbnailHeight={thumbnailHeight}
+          thumbnailHeight={effectiveThumbnailHeight}
           majorTickEvery={majorTickEvery}
           showAxis={showAxis}
         /> */}
           <YearLabels
             yearLabels={instanceTransforms.yearColumnLabels}
-            thumbnailHeight={thumbnailHeight}
+            thumbnailHeight={effectiveThumbnailHeight}
             showAllYearLabels={showAllYearLabels}
             majorTickEvery={majorTickEvery}
           />
@@ -383,7 +409,7 @@ const Atlas = () => {
           <Events
             eventGroups={eventGroups}
             yearPositions={yearPositions}
-            thumbnailHeight={thumbnailHeight}
+            thumbnailHeight={effectiveThumbnailHeight}
             gapBetweenGroups={eventGap}
             selection={
               selection
