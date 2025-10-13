@@ -87,6 +87,7 @@ const EventGroup = ({
             height={bounds.height}
             position={[bounds.centerX, bounds.centerY, 0.001]}
             color={outlineColor}
+            isActive={isGroupActive}
           />
         </>
       ) : null}

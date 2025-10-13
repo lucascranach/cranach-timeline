@@ -50,6 +50,7 @@ export interface GroupOutlineProps {
   position: [number, number, number]
   color: THREE.ColorRepresentation
   thickness?: number
+  isActive?: boolean
 }
 
 export interface GroupLabelProps {

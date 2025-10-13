@@ -3,22 +3,28 @@ import * as THREE from "three"
 import { GroupOutlineProps } from "../../types/events"
 import { OUTLINE_THICKNESS } from "../../utils/eventsUtils"
 
-const GroupOutline = ({ width, height, position, color, thickness = OUTLINE_THICKNESS }: GroupOutlineProps) => {
+const GroupOutline = ({
+  width,
+  height,
+  position,
+  color,
+  thickness = OUTLINE_THICKNESS,
+  isActive = false,
+}: GroupOutlineProps) => {
   const groupRef = useRef<THREE.Group>(null)
   const materialRef = useRef<THREE.MeshBasicMaterial | null>(null)
   const geometryRef = useRef<THREE.ShapeGeometry | null>(null)
 
   // Initialize material only once
   if (!materialRef.current) {
-    // Use the provided color with some transparency for a visible background
-    const backgroundColor = new THREE.Color(color as THREE.ColorRepresentation)
-    // Darken it slightly but keep it visible
-    backgroundColor.multiplyScalar(0.4)
+    // Use yellow for active, dark for inactive
+    const backgroundColor = isActive ? new THREE.Color("#FEB701") : new THREE.Color("#3a3a3a")
+    backgroundColor.multiplyScalar(isActive ? 0.4 : 0.6)
 
     materialRef.current = new THREE.MeshBasicMaterial({
       color: backgroundColor,
       transparent: true,
-      opacity: 0.5,
+      opacity: isActive ? 0.5 : 0.4,
       depthWrite: false,
       depthTest: false,
     })
@@ -32,13 +38,14 @@ const GroupOutline = ({ width, height, position, color, thickness = OUTLINE_THIC
     }
   }, [])
 
-  // Update color when prop changes
+  // Update color when isActive or color prop changes
   useEffect(() => {
     if (!materialRef.current) return
-    const backgroundColor = new THREE.Color(color as THREE.ColorRepresentation)
-    backgroundColor.multiplyScalar(0.4)
+    const backgroundColor = isActive ? new THREE.Color("#FEB701") : new THREE.Color("#3a3a3a")
+    backgroundColor.multiplyScalar(isActive ? 0.4 : 0.6)
     materialRef.current.color.set(backgroundColor)
-  }, [color])
+    materialRef.current.opacity = isActive ? 0.5 : 0.4
+  }, [color, isActive])
 
   // Disable raycasting for outline elements
   useEffect(() => {
