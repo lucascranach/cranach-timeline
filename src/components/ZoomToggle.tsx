@@ -2,7 +2,7 @@ import styled from "styled-components"
 
 const ToggleContainer = styled.div`
   position: absolute;
-  top: 3rem;
+  bottom: 3rem;
   right: 3rem;
   z-index: 9999;
   display: flex;

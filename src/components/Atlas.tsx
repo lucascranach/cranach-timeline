@@ -151,6 +151,7 @@ const Atlas = () => {
   const [selection, setSelection] = useState<SelectionState | null>(null)
   const selectionRef = useRef<SelectionState | null>(null)
   const autoSelectBlockRef = useRef<number>(0)
+  const manualClearBlockRef = useRef<number>(0)
   const getNow = useCallback(() => (typeof performance !== "undefined" ? performance.now() : Date.now()), [])
 
   useEffect(() => {
@@ -205,6 +206,8 @@ const Atlas = () => {
   // Keyboard navigation
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
+      // Ignore if Escape key (handled by EventInfo3D)
+      if (e.key === "Escape") return
       if (e.metaKey || e.ctrlKey || e.altKey) return
       const target = e.target as HTMLElement
       const tag = target?.tagName
@@ -316,6 +319,13 @@ const Atlas = () => {
     }
   }, [])
 
+  const handleClearSelection = useCallback(() => {
+    console.log("Clearing selection in Atlas")
+    setSelection(null)
+    // Block auto-selection for 2 seconds after manual clear
+    manualClearBlockRef.current = getNow() + 2000
+  }, [getNow])
+
   // Track the camera position and screen center for maintaining zoom origin at screen center
   const cameraXAtZoomStartRef = useRef<number | null>(null)
   const screenCenterXAtZoomStartRef = useRef<number | null>(null)
@@ -379,6 +389,8 @@ const Atlas = () => {
     // Event selection logic - skip during zoom transitions to prevent unwanted selection changes
     const now = getNow()
     if (now < autoSelectBlockRef.current) return
+    // Don't auto-select if user manually cleared selection
+    if (now < manualClearBlockRef.current) return
 
     // Don't auto-select during zoom transitions
     const isZooming = Math.abs(targetZoom.current - zoomProgressRef.current) > 0.001
@@ -542,7 +554,12 @@ const Atlas = () => {
 
           {/* Render EventInfo above selected event */}
           {selectedEvent && selectedGroupName && selectedEventPosition && (
-            <EventInfo3D event={selectedEvent} groupName={selectedGroupName} position={selectedEventPosition} />
+            <EventInfo3D
+              event={selectedEvent}
+              groupName={selectedGroupName}
+              position={selectedEventPosition}
+              onClear={handleClearSelection}
+            />
           )}
         </group>
       </group>

@@ -20,7 +20,13 @@ const YearLabels = ({ yearLabels, thumbnailHeight, showAllYearLabels, majorTickE
   return (
     <>
       {filteredLabels.map((lbl) => (
-        <Html key={lbl.key} position={[lbl.x, lbl.y - 2, 0.001]} center style={{ pointerEvents: "none" }}>
+        <Html
+          zIndexRange={[1000, 0]}
+          key={lbl.key}
+          position={[lbl.x, lbl.y - 2, 0.001]}
+          center
+          style={{ pointerEvents: "none", zIndex: 1 }}
+        >
           <div
             style={{
               fontSize: `${16}px`,

@@ -5,6 +5,7 @@ const GroupLabel = ({ text, position, color, fontSize = 14, isActive = false }: 
   return (
     <Html
       position={position}
+      zIndexRange={[1000, 0]}
       style={{
         color: isActive ? "#ffffff" : "rgba(255, 255, 255, 0.8)",
         fontSize: `${fontSize}px`,
@@ -28,6 +29,7 @@ const GroupLabel = ({ text, position, color, fontSize = 14, isActive = false }: 
           ? "0 4px 12px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 255, 255, 0.1)"
           : "0 4px 6px rgba(0, 0, 0, 0.1)",
         transition: "all 0.2s ease-in-out",
+        zIndex: 1,
       }}
     >
       {text}
