@@ -10,14 +10,15 @@ const GroupOutline = ({ width, height, position, color, thickness = OUTLINE_THIC
 
   // Initialize material only once
   if (!materialRef.current) {
-    // Derive a darker color from the provided color for a subtle dark background
-    const darkColor = new THREE.Color(color as THREE.ColorRepresentation)
-    darkColor.multiplyScalar(0.25)
+    // Use the provided color with some transparency for a visible background
+    const backgroundColor = new THREE.Color(color as THREE.ColorRepresentation)
+    // Darken it slightly but keep it visible
+    backgroundColor.multiplyScalar(0.4)
 
     materialRef.current = new THREE.MeshBasicMaterial({
-      color: darkColor,
+      color: backgroundColor,
       transparent: true,
-      opacity: 0.3,
+      opacity: 0.5,
       depthWrite: false,
       depthTest: false,
     })
@@ -34,9 +35,9 @@ const GroupOutline = ({ width, height, position, color, thickness = OUTLINE_THIC
   // Update color when prop changes
   useEffect(() => {
     if (!materialRef.current) return
-    const darkColor = new THREE.Color(color as THREE.ColorRepresentation)
-    darkColor.multiplyScalar(0.25)
-    materialRef.current.color.set(darkColor)
+    const backgroundColor = new THREE.Color(color as THREE.ColorRepresentation)
+    backgroundColor.multiplyScalar(0.4)
+    materialRef.current.color.set(backgroundColor)
   }, [color])
 
   // Disable raycasting for outline elements

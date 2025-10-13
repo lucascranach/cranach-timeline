@@ -155,9 +155,10 @@ export const calculateGroupBounds = (
  * Create colors for event pills
  */
 export const createEventColors = (groupColor?: string) => {
-  const baseColor = new THREE.Color("#b4b4b4")
-  const highlightColor = new THREE.Color(groupColor || "#FEB701")
-  const outlineColor = highlightColor.clone().lerp(new THREE.Color("#ffffff"), 0.4)
+  const darkColor = new THREE.Color("#3a3a3a") // Dark color for unselected groups
+  const groupBaseColor = new THREE.Color(groupColor || "#FEB701") // Group's color
+  const selectedColor = new THREE.Color("#FEB701") // Yellow for selected pill only
+  const outlineColor = groupBaseColor.clone().lerp(new THREE.Color("#ffffff"), 0.4)
 
-  return { baseColor, highlightColor, outlineColor }
+  return { darkColor, groupBaseColor, selectedColor, outlineColor }
 }

@@ -345,9 +345,14 @@ const Atlas = () => {
       }
     }
 
-    // Event selection logic
+    // Event selection logic - skip during zoom transitions to prevent unwanted selection changes
     const now = getNow()
     if (now < autoSelectBlockRef.current) return
+
+    // Don't auto-select during zoom transitions
+    const isZooming = Math.abs(targetZoom.current - zoomProgressRef.current) > 0.001
+    if (isZooming) return
+
     const groups = processedGroupsRef.current
     if (!groups.length) return
 

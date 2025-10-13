@@ -37,26 +37,38 @@ const EventPill = ({
     instanceScalesRef.current = new Float32Array(count).fill(1)
   }
 
-  // Initial placement (scale 1). Animated scaling handled in useFrame below.
+  // Update positions when they change, but preserve existing scales
+  // Also update positions in useFrame to handle smooth transitions during zoom
+  const needsPositionUpdate = useRef(true)
   useLayoutEffect(() => {
-    if (!ref.current) return
-    group.processedEvents.forEach((processedEvent, i) => {
-      const { startPos } = processedEvent
-      const eventY = eventBaseY - group.yOffset
-      dummy.position.set(startPos - pillWidth, eventY, 0.002)
-      dummy.rotation.set(0, 0, 0)
-      dummy.scale.set(1, 1, 1)
-      dummy.updateMatrix()
-      ref.current!.setMatrixAt(i, dummy.matrix)
-    })
-    ref.current.instanceMatrix.needsUpdate = true
+    needsPositionUpdate.current = true
   }, [group.processedEvents, eventBaseY, group.yOffset, pillWidth])
 
   // Animate scale toward target (2 if hovered or selected, else 1)
+  // Also update positions smoothly during transitions
   useFrame(() => {
     if (!ref.current) return
     let anyChanged = false
     const scales = instanceScalesRef.current!
+
+    // Update positions if needed (on first frame after layout change)
+    if (needsPositionUpdate.current) {
+      group.processedEvents.forEach((processedEvent, i) => {
+        const { startPos } = processedEvent
+        const eventY = eventBaseY - group.yOffset
+        const currentScale = scales[i] || 1
+        dummy.position.set(startPos - pillWidth, eventY, 0.002)
+        dummy.rotation.set(0, 0, 0)
+        dummy.scale.set(currentScale, currentScale, currentScale)
+        dummy.updateMatrix()
+        ref.current!.setMatrixAt(i, dummy.matrix)
+      })
+      ref.current.instanceMatrix.needsUpdate = true
+      needsPositionUpdate.current = false
+      anyChanged = true
+    }
+
+    // Animate scales
     for (let i = 0; i < count; i++) {
       const active =
         (selection && selection.group === group.name && selection.instance === i) ||
@@ -92,33 +104,41 @@ const EventPill = ({
     [group, onEventClick]
   )
 
-  const { baseColor, highlightColor } = createEventColors(group.color)
+  const { darkColor, groupBaseColor, selectedColor } = createEventColors(group.color)
 
-  // Initial color setup (all base color)
+  // Initial color setup (all dark color)
   useLayoutEffect(() => {
     if (!ref.current) return
     for (let i = 0; i < count; i++) {
-      ref.current.setColorAt(i, baseColor)
+      ref.current.setColorAt(i, darkColor)
     }
     ref.current.instanceColor!.needsUpdate = true
-  }, [count, baseColor])
+  }, [count, darkColor])
 
   // Update colors when selection changes
   useLayoutEffect(() => {
     if (!ref.current) return
-    // If this group is selected, color ALL instances (including the clicked one) red
-    if (selection && selection.group === group.name) {
-      for (let i = 0; i < count; i++) {
-        ref.current.setColorAt(i, highlightColor)
-      }
-    } else {
-      // Reset to base color (either no selection or different group selected means no highlight here)
-      for (let i = 0; i < count; i++) {
-        ref.current.setColorAt(i, baseColor)
+
+    // Check if this group has the selection
+    const thisGroupSelected = selection && selection.group === group.name
+
+    for (let i = 0; i < count; i++) {
+      if (thisGroupSelected) {
+        // This group is selected
+        if (selection!.instance === i) {
+          // This is the selected pill - use yellow
+          ref.current.setColorAt(i, selectedColor)
+        } else {
+          // This is not the selected pill but in the selected group - use group color
+          ref.current.setColorAt(i, groupBaseColor)
+        }
+      } else {
+        // This group is not selected - use dark color
+        ref.current.setColorAt(i, darkColor)
       }
     }
     ref.current.instanceColor!.needsUpdate = true
-  }, [selection, count, group.name, baseColor, highlightColor])
+  }, [selection, count, group.name, darkColor, groupBaseColor, selectedColor])
 
   return (
     <instancedMesh
