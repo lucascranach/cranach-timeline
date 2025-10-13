@@ -3,6 +3,7 @@ import styled from "styled-components"
 import { useEffect, useState } from "react"
 import { FaChevronUp, FaChevronDown } from "react-icons/fa"
 import { ProcessedEvent, ProcessedEventGroup } from "../types/events"
+import { useRelatedEventsContext } from "../hooks/useRelatedEventsContext"
 
 const EventInfoContainer = styled.div`
   max-width: 500px;
@@ -152,6 +153,14 @@ interface EventInfo3DProps {
 
 const EventInfo3D = ({ event, groupName, position, onClear, allEventGroups = [] }: EventInfo3DProps) => {
   const [expandedEvents, setExpandedEvents] = useState<Set<string>>(new Set())
+  const { keepRelatedEventsOpen } = useRelatedEventsContext()
+
+  // Reset expanded events when the selected event changes (only if keepRelatedEventsOpen is false)
+  useEffect(() => {
+    if (!keepRelatedEventsOpen) {
+      setExpandedEvents(new Set())
+    }
+  }, [event.id, keepRelatedEventsOpen])
 
   // Handle ESC key to clear selection
   useEffect(() => {
@@ -198,6 +207,14 @@ const EventInfo3D = ({ event, groupName, position, onClear, allEventGroups = [] 
         }))
     )
 
+  // Automatically expand all related events when keepRelatedEventsOpen is enabled
+  useEffect(() => {
+    if (keepRelatedEventsOpen && relatedEvents.length > 0) {
+      const allEventIds = relatedEvents.map((evt, index) => `${evt.groupName}-${index}`)
+      setExpandedEvents(new Set(allEventIds))
+    }
+  }, [keepRelatedEventsOpen, relatedEvents.length, event.id])
+
   // Format the date nicely
   const formatDate = (dateString: string) => {
     try {
@@ -223,12 +240,14 @@ const EventInfo3D = ({ event, groupName, position, onClear, allEventGroups = [] 
       <Html
         position={displayPosition}
         center
+        occlude={false}
         style={{
-          pointerEvents: "auto",
+          pointerEvents: "none",
           transform: "translate(-50%, -100%)",
           zIndex: 100000000000000000000,
           position: "relative",
         }}
+        wrapperClass="event-info-wrapper"
       >
         <EventInfoContainer>
           <CloseButton onClick={handleClear} title="Clear selection (ESC)">

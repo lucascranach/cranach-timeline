@@ -4,6 +4,15 @@ body {
   background-color: #18181a;
 }
 
+/* Ensure EventInfo3D wrapper doesn't block pointer events */
+.event-info-wrapper {
+  pointer-events: none !important;
+}
+
+.event-info-wrapper > * {
+  pointer-events: auto;
+}
+
 /* #webgpu-canvas {
   outline: 1px solid #fff;
   ::after {
