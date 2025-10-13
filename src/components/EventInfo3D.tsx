@@ -1,7 +1,7 @@
 import { Html } from "@react-three/drei"
 import styled from "styled-components"
-import { useEffect } from "react"
-import { ProcessedEvent } from "../types/events"
+import { useEffect, useState } from "react"
+import { ProcessedEvent, ProcessedEventGroup } from "../types/events"
 
 const EventInfoContainer = styled.div`
   max-width: 500px;
@@ -78,14 +78,77 @@ const CloseButton = styled.button`
   }
 `
 
+const RelatedEventsSection = styled.div`
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+`
+
+const RelatedEventsHeader = styled.div`
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+`
+
+const RelatedEventItem = styled.div<{ $isExpanded: boolean }>`
+  margin-bottom: 0.5rem;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+`
+
+const RelatedEventTitle = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+`
+
+const RelatedEventGroup = styled.span`
+  font-size: 0.7rem;
+  color: #feb701;
+  font-weight: 600;
+`
+
+const RelatedEventDescription = styled.div`
+  font-size: 0.8rem;
+  font-weight: 300;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.85);
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+`
+
+const ExpandIcon = styled.span<{ $isExpanded: boolean }>`
+  transition: transform 0.2s ease;
+  transform: ${(props) => (props.$isExpanded ? "rotate(180deg)" : "rotate(0deg)")};
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.6);
+`
+
 interface EventInfo3DProps {
   event: ProcessedEvent
   groupName: string
   position: [number, number, number]
   onClear: () => void
+  allEventGroups?: ProcessedEventGroup[]
 }
 
-const EventInfo3D = ({ event, groupName, position, onClear }: EventInfo3DProps) => {
+const EventInfo3D = ({ event, groupName, position, onClear, allEventGroups = [] }: EventInfo3DProps) => {
+  const [expandedEvents, setExpandedEvents] = useState<Set<string>>(new Set())
+
   // Handle ESC key to clear selection
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -104,6 +167,32 @@ const EventInfo3D = ({ event, groupName, position, onClear }: EventInfo3DProps) 
     console.log("Close button clicked!")
     onClear()
   }
+
+  const toggleEventExpanded = (eventId: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setExpandedEvents((prev) => {
+      const newSet = new Set(prev)
+      if (newSet.has(eventId)) {
+        newSet.delete(eventId)
+      } else {
+        newSet.add(eventId)
+      }
+      return newSet
+    })
+  }
+
+  // Find related events from the same year but different groups
+  const relatedEvents = allEventGroups
+    .filter((group) => group.name !== groupName) // Exclude current group
+    .flatMap((group) =>
+      group.processedEvents
+        .filter((evt) => evt.startYear === event.startYear)
+        .map((evt) => ({
+          ...evt,
+          groupName: group.name,
+          groupColor: group.color,
+        }))
+    )
 
   // Format the date nicely
   const formatDate = (dateString: string) => {
@@ -144,6 +233,32 @@ const EventInfo3D = ({ event, groupName, position, onClear }: EventInfo3DProps) 
           <EventGroupName>{groupName}</EventGroupName>
           <EventDate>{formatDate(event.event.startDate)}</EventDate>
           <EventDescription>{event.event.description}</EventDescription>
+
+          {/* Related events from the same year */}
+          {relatedEvents.length > 0 && (
+            <RelatedEventsSection>
+              <RelatedEventsHeader>
+                Related Events in {event.startYear} ({relatedEvents.length})
+              </RelatedEventsHeader>
+              {relatedEvents.map((relatedEvent, index) => {
+                const eventId = `${relatedEvent.groupName}-${index}`
+                const isExpanded = expandedEvents.has(eventId)
+                return (
+                  <RelatedEventItem
+                    key={eventId}
+                    $isExpanded={isExpanded}
+                    onClick={(e) => toggleEventExpanded(eventId, e)}
+                  >
+                    <RelatedEventTitle>
+                      <RelatedEventGroup>{relatedEvent.groupName}</RelatedEventGroup>
+                      <ExpandIcon $isExpanded={isExpanded}>▼</ExpandIcon>
+                    </RelatedEventTitle>
+                    {isExpanded && <RelatedEventDescription>{relatedEvent.event.description}</RelatedEventDescription>}
+                  </RelatedEventItem>
+                )
+              })}
+            </RelatedEventsSection>
+          )}
         </EventInfoContainer>
       </Html>
     </group>

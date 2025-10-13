@@ -559,6 +559,7 @@ const Atlas = () => {
               groupName={selectedGroupName}
               position={selectedEventPosition}
               onClear={handleClearSelection}
+              allEventGroups={processedGroupsRef.current}
             />
           )}
         </group>
