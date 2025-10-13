@@ -1,6 +1,7 @@
 import { Html } from "@react-three/drei"
 import styled from "styled-components"
 import { useEffect, useState } from "react"
+import { FaChevronUp, FaChevronDown } from "react-icons/fa"
 import { ProcessedEvent, ProcessedEventGroup } from "../types/events"
 
 const EventInfoContainer = styled.div`
@@ -81,28 +82,29 @@ const CloseButton = styled.button`
 const RelatedEventsSection = styled.div`
   margin-top: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
 `
 
 const RelatedEventsHeader = styled.div`
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.8);
-  margin-bottom: 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 0.5rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
 `
 
 const RelatedEventItem = styled.div<{ $isExpanded: boolean }>`
-  margin-bottom: 0.5rem;
-  padding: 0.5rem;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 0.5rem;
+  margin-bottom: 0.4rem;
+  padding: 0.4rem 0.6rem;
+  background: transparent;
+  border-radius: 0.4rem;
   cursor: pointer;
   transition: background 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 
   &:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
   }
 `
 
@@ -111,31 +113,33 @@ const RelatedEventTitle = styled.div`
   justify-content: space-between;
   align-items: center;
   font-size: 0.85rem;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.9);
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.7);
 `
 
 const RelatedEventGroup = styled.span`
   font-size: 0.7rem;
-  color: #feb701;
-  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 `
 
 const RelatedEventDescription = styled.div`
   font-size: 0.8rem;
   font-weight: 300;
   line-height: 1.4;
-  color: rgba(255, 255, 255, 0.85);
-  margin-top: 0.5rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 0.4rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 `
 
 const ExpandIcon = styled.span<{ $isExpanded: boolean }>`
-  transition: transform 0.2s ease;
-  transform: ${(props) => (props.$isExpanded ? "rotate(180deg)" : "rotate(0deg)")};
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.6);
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.4);
 `
 
 interface EventInfo3DProps {
@@ -251,7 +255,9 @@ const EventInfo3D = ({ event, groupName, position, onClear, allEventGroups = [] 
                   >
                     <RelatedEventTitle>
                       <RelatedEventGroup>{relatedEvent.groupName}</RelatedEventGroup>
-                      <ExpandIcon $isExpanded={isExpanded}>▼</ExpandIcon>
+                      <ExpandIcon $isExpanded={isExpanded}>
+                        {isExpanded ? <FaChevronUp /> : <FaChevronDown />}
+                      </ExpandIcon>
                     </RelatedEventTitle>
                     {isExpanded && <RelatedEventDescription>{relatedEvent.event.description}</RelatedEventDescription>}
                   </RelatedEventItem>
