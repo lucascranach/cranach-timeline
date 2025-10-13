@@ -377,11 +377,14 @@ const Atlas = () => {
 
   // Use custom hooks for geometry and transforms
   const cropSettings = { mode: cropMode, offsetX: cropOffsetX, offsetY: cropOffsetY, scale: cropScale }
+
+  // Use base dimensions for geometry to prevent recreation during zoom animation
+  // The geometry itself doesn't need to change, only the instance transforms
   const geometryWithAttributes = useAtlasGeometry(
     atlasData,
     sortedImages,
-    effectiveThumbnailWidth,
-    effectiveThumbnailHeight,
+    thumbnailWidth, // Use base width, not effective
+    thumbnailHeight, // Use base height, not effective
     cropSettings
   )
 
@@ -445,6 +448,7 @@ const Atlas = () => {
         </group>
 
         <ThumbnailMesh
+          key="thumbnail-mesh" // Stable key to prevent recreation
           geometry={geometryWithAttributes}
           material={atlasMaterial}
           instanceCount={instanceCount}

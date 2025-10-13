@@ -31,7 +31,18 @@ const ThumbnailMesh = ({
 }: ThumbnailMeshProps) => {
   const instancedMeshRef = useRef<THREE.InstancedMesh | null>(null)
 
-  // Apply transforms to instanced mesh
+  // Update geometry and material when they change
+  useEffect(() => {
+    if (!instancedMeshRef.current) return
+    instancedMeshRef.current.geometry = geometry
+  }, [geometry])
+
+  useEffect(() => {
+    if (!instancedMeshRef.current) return
+    instancedMeshRef.current.material = material
+  }, [material])
+
+  // Apply transforms to instanced mesh - this updates the matrices without recreating the mesh
   useEffect(() => {
     if (!instancedMeshRef.current || !positions.length) return
 
@@ -51,18 +62,32 @@ const ThumbnailMesh = ({
     mesh.instanceMatrix.needsUpdate = true
   }, [positions, scales])
 
+  // Memoize the click handler to prevent unnecessary re-renders
+  const handleClick = useRef((e: any) => {
+    e.stopPropagation()
+    const index = e.instanceId ?? -1
+    if (index >= 0 && sortedImages[index]) {
+      onThumbnailClick(index, sortedImages[index])
+    }
+  })
+
+  // Update the click handler reference when dependencies change
+  useEffect(() => {
+    handleClick.current = (e: any) => {
+      e.stopPropagation()
+      const index = e.instanceId ?? -1
+      if (index >= 0 && sortedImages[index]) {
+        onThumbnailClick(index, sortedImages[index])
+      }
+    }
+  }, [sortedImages, onThumbnailClick])
+
   return (
     <instancedMesh
       ref={instancedMeshRef}
-      args={[geometry, material, instanceCount || 1]}
+      args={[geometry, material, instanceCount]}
       frustumCulled={false}
-      onClick={(e) => {
-        e.stopPropagation()
-        const index = e.instanceId ?? -1
-        if (index >= 0 && sortedImages[index]) {
-          onThumbnailClick(index, sortedImages[index])
-        }
-      }}
+      onClick={(e) => handleClick.current(e)}
     />
   )
 }
