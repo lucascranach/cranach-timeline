@@ -322,9 +322,7 @@ const Atlas = () => {
   const handleClearSelection = useCallback(() => {
     console.log("Clearing selection in Atlas")
     setSelection(null)
-    // Block auto-selection for 2 seconds after manual clear
-    manualClearBlockRef.current = getNow() + 2000
-  }, [getNow])
+  }, [])
 
   // Track the camera position and screen center for maintaining zoom origin at screen center
   const cameraXAtZoomStartRef = useRef<number | null>(null)
@@ -389,8 +387,6 @@ const Atlas = () => {
     // Event selection logic - skip during zoom transitions to prevent unwanted selection changes
     const now = getNow()
     if (now < autoSelectBlockRef.current) return
-    // Don't auto-select if user manually cleared selection
-    if (now < manualClearBlockRef.current) return
 
     // Don't auto-select during zoom transitions
     const isZooming = Math.abs(targetZoom.current - zoomProgressRef.current) > 0.001
@@ -401,10 +397,13 @@ const Atlas = () => {
 
     const cameraX = state.camera.position.x
     const current = selectionRef.current
-    let activeGroupIndex = current?.groupIndex ?? -1
+
+    // Only run auto-selection if there's already a selection active
+    if (!current) return
+
+    let activeGroupIndex = current.groupIndex
     if (activeGroupIndex < 0 || !groups[activeGroupIndex] || !groups[activeGroupIndex].processedEvents.length) {
-      activeGroupIndex = groups.findIndex((g) => g.processedEvents.length > 0)
-      if (activeGroupIndex === -1) return
+      return // Exit if the current group is invalid
     }
 
     const activeGroup = groups[activeGroupIndex]
