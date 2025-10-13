@@ -15,6 +15,7 @@ import YearLabels from "./YearLabels"
 import ThumbnailMesh from "./ThumbnailMesh"
 import FallbackUI from "./FallbackUI"
 import Events from "./events/Events"
+import EventInfo3D from "./EventInfo3D"
 import { ProcessedEventGroup } from "../types/events"
 import { useEvents } from "@/hooks/useEvents"
 
@@ -74,7 +75,7 @@ const Atlas = () => {
   // Use custom hooks for controls and settings
   const controls = useAtlasControls()
   const { enableZoomStep: enableZoomStepFromContext, targetZoom } = useZoomContext()
-  const { setSelectedEvent } = useSelectedEvent()
+  const { setSelectedEvent, selectedEvent, selectedGroupName, selectedEventPosition } = useSelectedEvent()
 
   const {
     thumbnailWidth,
@@ -159,24 +160,30 @@ const Atlas = () => {
   // Update selected event context when selection changes
   useEffect(() => {
     if (!selection) {
-      setSelectedEvent(null, null)
+      setSelectedEvent(null, null, null)
       return
     }
 
     const group = processedGroupsRef.current[selection.groupIndex]
     if (!group) {
-      setSelectedEvent(null, null)
+      setSelectedEvent(null, null, null)
       return
     }
 
     const event = group.processedEvents[selection.eventIndex]
     if (!event) {
-      setSelectedEvent(null, null)
+      setSelectedEvent(null, null, null)
       return
     }
 
-    setSelectedEvent(event, group.name)
-  }, [selection, setSelectedEvent])
+    // Calculate event position for UI placement
+    // Events are positioned below the timeline - match the calculation from Events.tsx
+    const eventBaseY = -thumbnailHeight * 0.5 - 0.3
+    const eventY = eventBaseY - group.yOffset
+    const position: [number, number, number] = [event.startPos, eventY, 0]
+
+    setSelectedEvent(event, group.name, position)
+  }, [selection, setSelectedEvent, thumbnailHeight])
 
   // Helper to dispatch camera center event
   const centerOnX = useCallback((x: number) => {
@@ -532,6 +539,11 @@ const Atlas = () => {
               processedGroupsRef.current = groups
             }}
           />
+
+          {/* Render EventInfo above selected event */}
+          {selectedEvent && selectedGroupName && selectedEventPosition && (
+            <EventInfo3D event={selectedEvent} groupName={selectedGroupName} position={selectedEventPosition} />
+          )}
         </group>
       </group>
     </>
