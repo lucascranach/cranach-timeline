@@ -18,7 +18,12 @@ interface AtlasData {
   images: AtlasImage[]
 }
 
-export const useAtlasData = (yearSpacing: number) => {
+export const useAtlasData = (
+  yearSpacing: number,
+  zoomOriginX: number | null = null,
+  zoomProgress: number = 0,
+  zoomMultiplier: number = 1
+) => {
   const [atlasData, setAtlasData] = useState<AtlasData | null>(null)
 
   // Define uniform timeline year range (extended earlier if needed)
@@ -54,9 +59,24 @@ export const useAtlasData = (yearSpacing: number) => {
     const keys = Array.from({ length: END_YEAR - START_YEAR + 1 }, (_, i) => String(START_YEAR + i))
 
     // Center positions so REFERENCE_YEAR maps to x = 0
+    // When zooming, scale positions relative to the zoom origin (screen center)
     const positions = keys.reduce((acc, year) => {
       const yrNum = parseInt(year, 10)
-      acc[year] = (yrNum - REFERENCE_YEAR) * yearSpacing
+      const basePosition = (yrNum - REFERENCE_YEAR) * yearSpacing
+
+      // If we have a zoom origin, scale positions relative to it
+      if (zoomOriginX !== null && zoomProgress > 0) {
+        // Calculate what the base spacing would be (unzoomed)
+        const baseSpacing = yearSpacing / (1 + (zoomMultiplier - 1) * zoomProgress)
+        const basePos = (yrNum - REFERENCE_YEAR) * baseSpacing
+        // Scale offset from zoom origin
+        const offsetFromOrigin = basePos - zoomOriginX
+        const currentScale = 1 + (zoomMultiplier - 1) * zoomProgress
+        acc[year] = zoomOriginX + offsetFromOrigin * currentScale
+      } else {
+        acc[year] = basePosition
+      }
+
       return acc
     }, {} as Record<string, number>)
 
@@ -66,7 +86,7 @@ export const useAtlasData = (yearSpacing: number) => {
       yearKeys: keys,
       yearPositions: positions,
     }
-  }, [atlasData, yearSpacing])
+  }, [atlasData, yearSpacing, zoomOriginX, zoomProgress, zoomMultiplier])
 
   return {
     atlasData,

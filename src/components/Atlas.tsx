@@ -103,6 +103,10 @@ const Atlas = () => {
   const [zoomProgress, setZoomProgress] = useState(0)
   const zoomProgressRef = useRef(0)
 
+  // Store the zoom origin (screen center in world coordinates) when zoom starts
+  const [zoomOriginX, setZoomOriginX] = useState<number | null>(null)
+  const zoomOriginXRef = useRef<number | null>(null)
+
   console.log("Atlas: enableZoomStep =", enableZoomStep, "zoomMultiplier =", zoomMultiplier)
 
   // Apply zoom multiplier with smooth interpolation
@@ -126,8 +130,15 @@ const Atlas = () => {
     const baseSpacing = yearSpacing
     const zoomedSpacing = yearSpacing * zoomMultiplier
     return baseSpacing + (zoomedSpacing - baseSpacing) * zoomProgress
-  }, [yearSpacing, zoomMultiplier, zoomProgress]) // Load and process atlas data
-  const { atlasData, sortedImages, groupedByYear, yearKeys, yearPositions } = useAtlasData(effectiveYearSpacing)
+  }, [yearSpacing, zoomMultiplier, zoomProgress])
+
+  // Load and process atlas data with zoom origin
+  const { atlasData, sortedImages, groupedByYear, yearKeys, yearPositions } = useAtlasData(
+    effectiveYearSpacing,
+    zoomOriginX,
+    zoomProgress,
+    zoomMultiplier
+  )
 
   // Load events data
   const { eventGroups } = useEvents(EVENT_FILE_CONFIGS)
@@ -274,8 +285,9 @@ const Atlas = () => {
     }
   }, [])
 
-  // Track the camera position for maintaining zoom origin at screen center
+  // Track the camera position and screen center for maintaining zoom origin at screen center
   const cameraXAtZoomStartRef = useRef<number | null>(null)
+  const screenCenterXAtZoomStartRef = useRef<number | null>(null)
   const zoomStartProgressRef = useRef(0)
 
   useFrame((state, delta) => {
@@ -284,10 +296,16 @@ const Atlas = () => {
     const diff = targetZoom.current - zoomProgressRef.current
 
     if (Math.abs(diff) > 0.001) {
-      // Capture the camera position when zoom starts
+      // Capture the camera position and screen center when zoom starts
       if (cameraXAtZoomStartRef.current === null) {
         cameraXAtZoomStartRef.current = state.camera.position.x
+        // The screen center in world coordinates is at the camera's x position (for orthographic camera)
+        screenCenterXAtZoomStartRef.current = state.camera.position.x
         zoomStartProgressRef.current = zoomProgressRef.current
+
+        // Store the zoom origin for use in position calculations
+        zoomOriginXRef.current = state.camera.position.x
+        setZoomOriginX(state.camera.position.x)
       }
 
       const prevProgress = zoomProgressRef.current
@@ -300,8 +318,12 @@ const Atlas = () => {
       const currentScale = 1 + (zoomMultiplier - 1) * zoomProgressRef.current
       const scaleDelta = currentScale / prevScale
 
-      // Adjust camera to maintain screen center: scale camera position from origin
-      state.camera.position.x *= scaleDelta
+      // Adjust camera to maintain screen center as the zoom origin
+      // The screen center point should remain fixed in screen space
+      const screenCenterX = screenCenterXAtZoomStartRef.current!
+      const offsetFromCenter = state.camera.position.x - screenCenterX
+      const scaledOffset = offsetFromCenter * scaleDelta
+      state.camera.position.x = screenCenterX + scaledOffset
 
       // Update state to trigger re-renders (which will recalculate layout)
       setZoomProgress(zoomProgressRef.current)
@@ -313,6 +335,13 @@ const Atlas = () => {
       // Reset references when zoom animation completes
       if (cameraXAtZoomStartRef.current !== null) {
         cameraXAtZoomStartRef.current = null
+        screenCenterXAtZoomStartRef.current = null
+
+        // Clear zoom origin when animation completes and we're back to unzoomed
+        if (targetZoom.current === 0) {
+          zoomOriginXRef.current = null
+          setZoomOriginX(null)
+        }
       }
     }
 
