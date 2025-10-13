@@ -336,13 +336,12 @@ const Atlas = () => {
   const instanceCount = instanceTransforms.positions.length
 
   return (
-    <group position={[0, atlasY, 0]}>
-      {/* Vertical decade background */}
-      {/* <CameraPlane offset={[0, -25, -60]} size={[220, 49.1]} color={"#62646f"} opacity={0.6} depthTest={true} /> */}
+    <>
       <DecadeDiagonalBackground
         yearKeys={yearKeys}
         yearPositions={yearPositions}
-        height={500} // Much larger height to extend stripes further at top and bottom
+        offset={5}
+        height={60} // Much larger height to extend stripes further at top and bottom
         lineWidth={0.15}
         opacity={0.4}
         lineColor={new THREE.Color(0.25, 0.25, 0.3)}
@@ -351,51 +350,54 @@ const Atlas = () => {
         gapLength={dashGap}
         dashSpeed={dashSpeed}
       />
-
-      <group position={[0, 0, 0]}>
-        {/* <TimelineAxis
+      <group position={[0, atlasY, 0]}>
+        {/* Vertical decade background */}
+        {/* <CameraPlane offset={[0, -25, -60]} size={[220, 49.1]} color={"#62646f"} opacity={0.6} depthTest={true} /> */}
+        <group position={[0, 0, 0]}>
+          {/* <TimelineAxis
           yearKeys={yearKeys}
           yearPositions={yearPositions}
           thumbnailHeight={thumbnailHeight}
           majorTickEvery={majorTickEvery}
           showAxis={showAxis}
         /> */}
-        <YearLabels
-          yearLabels={instanceTransforms.yearColumnLabels}
-          thumbnailHeight={thumbnailHeight}
-          showAllYearLabels={showAllYearLabels}
-          majorTickEvery={majorTickEvery}
-        />
-      </group>
+          <YearLabels
+            yearLabels={instanceTransforms.yearColumnLabels}
+            thumbnailHeight={thumbnailHeight}
+            showAllYearLabels={showAllYearLabels}
+            majorTickEvery={majorTickEvery}
+          />
+        </group>
 
-      <ThumbnailMesh
-        geometry={geometryWithAttributes}
-        material={atlasMaterial}
-        instanceCount={instanceCount}
-        positions={instanceTransforms.positions}
-        scales={instanceTransforms.scales}
-        sortedImages={sortedImages}
-        onThumbnailClick={handleThumbnailClick}
-      />
-
-      <group position={[0, -7, 0]}>
-        <Events
-          eventGroups={eventGroups}
-          yearPositions={yearPositions}
-          thumbnailHeight={thumbnailHeight}
-          gapBetweenGroups={eventGap}
-          selection={
-            selection
-              ? { group: processedGroupsRef.current[selection.groupIndex]?.name, instance: selection.eventIndex }
-              : null
-          }
-          onSelect={({ group, instance }) => handleEventSelect({ group, instance })}
-          onProcessed={(groups) => {
-            processedGroupsRef.current = groups
-          }}
+        <ThumbnailMesh
+          geometry={geometryWithAttributes}
+          material={atlasMaterial}
+          instanceCount={instanceCount}
+          positions={instanceTransforms.positions}
+          scales={instanceTransforms.scales}
+          sortedImages={sortedImages}
+          onThumbnailClick={handleThumbnailClick}
         />
+
+        <group position={[0, -7, 0]}>
+          <Events
+            eventGroups={eventGroups}
+            yearPositions={yearPositions}
+            thumbnailHeight={thumbnailHeight}
+            gapBetweenGroups={eventGap}
+            selection={
+              selection
+                ? { group: processedGroupsRef.current[selection.groupIndex]?.name, instance: selection.eventIndex }
+                : null
+            }
+            onSelect={({ group, instance }) => handleEventSelect({ group, instance })}
+            onProcessed={(groups) => {
+              processedGroupsRef.current = groups
+            }}
+          />
+        </group>
       </group>
-    </group>
+    </>
   )
 }
 

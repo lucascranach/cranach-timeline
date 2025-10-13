@@ -13,6 +13,7 @@ interface DecadeVerticalShaderOptions {
   dashLength?: number // Length of the visible dash segment along Y
   gapLength?: number // Length of the gap between dashes
   dashOffset?: number // Offset to scroll / shift dash pattern
+  yOffset?: number // Y position offset to align dashes with thumbnails
 }
 
 export const DecadeVerticalShaderTSL = (options: DecadeVerticalShaderOptions = {}) => {
@@ -25,6 +26,7 @@ export const DecadeVerticalShaderTSL = (options: DecadeVerticalShaderOptions = {
     dashLength = 1.0,
     gapLength = 0.6,
     dashOffset = 0.0,
+    yOffset = 0.0,
   } = options
 
   // Create uniform nodes for shader parameters
@@ -35,6 +37,7 @@ export const DecadeVerticalShaderTSL = (options: DecadeVerticalShaderOptions = {
   const dashLengthNode = TSL.uniform(dashLength)
   const gapLengthNode = TSL.uniform(gapLength)
   const dashOffsetNode = TSL.uniform(dashOffset)
+  const yOffsetNode = TSL.uniform(yOffset)
 
   // Calculate average spacing for regular pattern fallback
   const avgSpacing =
@@ -74,8 +77,8 @@ export const DecadeVerticalShaderTSL = (options: DecadeVerticalShaderOptions = {
     // --- Dash pattern logic ---
     // We create a repeating pattern along Y composed of a visible segment (dashLength) and a gap (gapLength)
     const dashCycle = dashLengthNode.add(gapLengthNode)
-    // Shift / animate via dashOffset
-    const dashPos = TSL.mod(y.add(dashOffsetNode), dashCycle)
+    // Apply yOffset to align with thumbnails, then shift / animate via dashOffset
+    const dashPos = TSL.mod(y.sub(yOffsetNode).add(dashOffsetNode), dashCycle)
     const dashVisible = dashPos.lessThan(dashLengthNode)
 
     // Optional: soften dash edges (very small fade for aesthetics)
@@ -119,6 +122,7 @@ interface DecadeVerticalBackgroundProps extends DecadeVerticalShaderOptions {
   yearKeys?: string[]
   yearPositions?: Record<string, number>
   dashSpeed?: number // units per second to scroll dash pattern
+  offset?: number // Y position offset for the entire background plane
 }
 
 export const DecadeDiagonalBackground = ({
@@ -128,6 +132,7 @@ export const DecadeDiagonalBackground = ({
   yearKeys,
   yearPositions,
   dashSpeed = 0,
+  offset = 0,
   ...shaderOptions
 }: DecadeVerticalBackgroundProps) => {
   // Calculate decade positions from year data
@@ -227,14 +232,14 @@ export const DecadeDiagonalBackground = ({
       const startPos = yearPositions[firstYear]
       const endPos = yearPositions[lastYear]
       const centerX = (startPos + endPos) / 2
-      return [centerX, position[1], position[2]]
+      return [centerX, position[1] + offset, position[2]]
     }
     return position
-  }, [yearKeys, yearPositions, position])
+  }, [yearKeys, yearPositions, position, offset])
 
   const material = useMemo(() => {
-    return DecadeVerticalShaderTSL({ ...shaderOptions, decadePositions })
-  }, [shaderOptions, decadePositions])
+    return DecadeVerticalShaderTSL({ ...shaderOptions, decadePositions, yOffset: offset })
+  }, [shaderOptions, decadePositions, offset])
 
   // Animate dash offset if dashSpeed != 0 (mutating the uniform value each frame)
   const dashOffsetRef = useRef(0)
