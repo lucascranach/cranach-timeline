@@ -15,6 +15,7 @@ interface EventGroupProps {
   pillGeometry: THREE.ShapeGeometry
   selection: { group: string; instance: number } | null
   hovered: { group: string; instance: number } | null
+  selectedYear: number | null
   onEventClick: (processed: any, groupData: ProcessedEventGroup, instanceId: number) => void
   onHoverChange: (payload: { group: string; instance: number } | null) => void
   setHovered: React.Dispatch<React.SetStateAction<{ group: string; instance: number } | null>>
@@ -29,6 +30,7 @@ const EventGroup = ({
   pillGeometry,
   selection,
   hovered,
+  selectedYear,
   onEventClick,
   onHoverChange,
   setHovered,
@@ -99,6 +101,7 @@ const EventGroup = ({
         pillGeometry={pillGeometry}
         selection={selection}
         hovered={hovered}
+        selectedYear={selectedYear}
         onEventClick={onEventClick}
         onHoverChange={onHoverChange}
         setHovered={setHovered}

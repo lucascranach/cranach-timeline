@@ -546,6 +546,7 @@ const Atlas = () => {
                 ? { group: processedGroupsRef.current[selection.groupIndex]?.name, instance: selection.eventIndex }
                 : null
             }
+            selectedYear={selectedEvent?.startYear ?? null}
             onSelect={({ group, instance }) => handleEventSelect({ group, instance })}
             onProcessed={(groups) => {
               processedGroupsRef.current = groups

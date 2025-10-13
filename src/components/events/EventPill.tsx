@@ -11,6 +11,7 @@ interface EventPillProps {
   pillGeometry: THREE.ShapeGeometry
   selection: { group: string; instance: number } | null
   hovered: { group: string; instance: number } | null
+  selectedYear: number | null
   onEventClick: (processed: any, groupData: ProcessedEventGroup, instanceId: number) => void
   onHoverChange: (payload: { group: string; instance: number } | null) => void
   setHovered: React.Dispatch<React.SetStateAction<{ group: string; instance: number } | null>>
@@ -23,6 +24,7 @@ const EventPill = ({
   pillGeometry,
   selection,
   hovered,
+  selectedYear,
   onEventClick,
   onHoverChange,
   setHovered,
@@ -123,6 +125,9 @@ const EventPill = ({
     const thisGroupSelected = selection && selection.group === group.name
 
     for (let i = 0; i < count; i++) {
+      const event = group.processedEvents[i]
+      const isRelatedEvent = selectedYear !== null && event.startYear === selectedYear && !thisGroupSelected
+
       if (thisGroupSelected) {
         // This group is selected
         if (selection!.instance === i) {
@@ -132,13 +137,16 @@ const EventPill = ({
           // This is not the selected pill but in the selected group - use group color
           ref.current.setColorAt(i, groupBaseColor)
         }
+      } else if (isRelatedEvent) {
+        // This event is from the same year as the selected event - use yellow
+        ref.current.setColorAt(i, selectedColor)
       } else {
         // This group is not selected - use dark color
         ref.current.setColorAt(i, darkColor)
       }
     }
     ref.current.instanceColor!.needsUpdate = true
-  }, [selection, count, group.name, darkColor, groupBaseColor, selectedColor])
+  }, [selection, selectedYear, count, group.name, group.processedEvents, darkColor, groupBaseColor, selectedColor])
 
   return (
     <instancedMesh

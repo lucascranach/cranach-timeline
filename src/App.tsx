@@ -29,7 +29,7 @@ const AppContent = () => {
     <>
       <Title>Lucas Cranach Timeline</Title>
       <ZoomToggle isEnabled={enableZoomStep} onToggle={setEnableZoomStep} />
-      <Leva collapsed />
+      <Leva collapsed hidden />
 
       <Scene />
     </>

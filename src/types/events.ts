@@ -31,6 +31,8 @@ export interface EventsProps {
   gapBetweenGroups?: number
   /** Currently selected event, managed externally */
   selection?: { group: string; instance: number } | null
+  /** Year of the selected event to highlight related events */
+  selectedYear?: number | null
   /** Callback on select (click) */
   onSelect?: (payload: {
     group: string

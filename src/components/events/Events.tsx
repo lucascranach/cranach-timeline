@@ -9,6 +9,7 @@ const Events = ({
   thumbnailHeight,
   gapBetweenGroups = 0.15,
   selection: externalSelection,
+  selectedYear = null,
   onSelect,
   onHoverChange,
   onProcessed,
@@ -43,6 +44,7 @@ const Events = ({
           pillGeometry={pillGeometry}
           selection={selection}
           hovered={hovered}
+          selectedYear={selectedYear}
           onEventClick={handleEventClick}
           onHoverChange={onHoverChange}
           setHovered={setHovered}
