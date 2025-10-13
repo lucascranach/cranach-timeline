@@ -9,6 +9,7 @@ import { useAtlasData } from "@/hooks/useAtlasData"
 import { useAtlasGeometry } from "@/hooks/useAtlasGeometry"
 import { useAtlasTransforms } from "@/hooks/useAtlasTransforms"
 import { useZoomContext } from "@/hooks/useZoomContext"
+import { useSelectedEvent } from "@/hooks/useSelectedEventContext"
 import TimelineAxis from "./TimelineAxis"
 import YearLabels from "./YearLabels"
 import ThumbnailMesh from "./ThumbnailMesh"
@@ -73,6 +74,7 @@ const Atlas = () => {
   // Use custom hooks for controls and settings
   const controls = useAtlasControls()
   const { enableZoomStep: enableZoomStepFromContext, targetZoom } = useZoomContext()
+  const { setSelectedEvent } = useSelectedEvent()
 
   const {
     thumbnailWidth,
@@ -107,14 +109,14 @@ const Atlas = () => {
   const [zoomOriginX, setZoomOriginX] = useState<number | null>(null)
   const zoomOriginXRef = useRef<number | null>(null)
 
-  console.log("Atlas: enableZoomStep =", enableZoomStep, "zoomMultiplier =", zoomMultiplier)
+  // console.log("Atlas: enableZoomStep =", enableZoomStep, "zoomMultiplier =", zoomMultiplier)
 
   // Apply zoom multiplier with smooth interpolation
   const effectiveThumbnailWidth = useMemo(() => {
     const baseWidth = thumbnailWidth
     const zoomedWidth = thumbnailWidth * zoomMultiplier
     const result = baseWidth + (zoomedWidth - baseWidth) * zoomProgress
-    console.log("Atlas: effectiveThumbnailWidth =", result)
+    // console.log("Atlas: effectiveThumbnailWidth =", result)
     return result
   }, [thumbnailWidth, zoomMultiplier, zoomProgress])
 
@@ -122,7 +124,7 @@ const Atlas = () => {
     const baseHeight = thumbnailHeight
     const zoomedHeight = thumbnailHeight * zoomMultiplier
     const result = baseHeight + (zoomedHeight - baseHeight) * zoomProgress
-    console.log("Atlas: effectiveThumbnailHeight =", result)
+    // console.log("Atlas: effectiveThumbnailHeight =", result)
     return result
   }, [thumbnailHeight, zoomMultiplier, zoomProgress])
 
@@ -153,6 +155,28 @@ const Atlas = () => {
   useEffect(() => {
     selectionRef.current = selection
   }, [selection])
+
+  // Update selected event context when selection changes
+  useEffect(() => {
+    if (!selection) {
+      setSelectedEvent(null, null)
+      return
+    }
+
+    const group = processedGroupsRef.current[selection.groupIndex]
+    if (!group) {
+      setSelectedEvent(null, null)
+      return
+    }
+
+    const event = group.processedEvents[selection.eventIndex]
+    if (!event) {
+      setSelectedEvent(null, null)
+      return
+    }
+
+    setSelectedEvent(event, group.name)
+  }, [selection, setSelectedEvent])
 
   // Helper to dispatch camera center event
   const centerOnX = useCallback((x: number) => {

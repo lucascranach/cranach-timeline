@@ -2,8 +2,10 @@ import "./styles/App.css"
 
 import Scene from "./components/Scene"
 import ZoomToggle from "./components/ZoomToggle"
+import EventInfo from "./components/EventInfo"
 import { Leva } from "leva"
 import { ZoomProvider, useZoomContext } from "./hooks/useZoomContext"
+import { SelectedEventProvider, useSelectedEvent } from "./hooks/useSelectedEventContext"
 
 import styled from "styled-components"
 
@@ -23,11 +25,13 @@ const Title = styled.h1`
 
 const AppContent = () => {
   const { enableZoomStep, setEnableZoomStep } = useZoomContext()
+  const { selectedEvent, selectedGroupName } = useSelectedEvent()
 
   return (
     <>
       <Title>Lucas Cranach Timeline</Title>
       <ZoomToggle isEnabled={enableZoomStep} onToggle={setEnableZoomStep} />
+      <EventInfo event={selectedEvent} groupName={selectedGroupName} />
       <Leva collapsed />
 
       <Scene />
@@ -38,7 +42,9 @@ const AppContent = () => {
 function App() {
   return (
     <ZoomProvider>
-      <AppContent />
+      <SelectedEventProvider>
+        <AppContent />
+      </SelectedEventProvider>
     </ZoomProvider>
   )
 }

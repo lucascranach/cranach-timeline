@@ -10,17 +10,19 @@ const ToggleContainer = styled.div`
   gap: 0.75rem;
   font-family: "IBMPlexSans", sans-serif;
   color: white;
-  background-color: rgba(24, 24, 26, 0.95);
+  background: rgba(0, 0, 0, 0.75);
   padding: 0.75rem 1.25rem;
-  border-radius: 0.5rem;
-  backdrop-filter: blur(10px);
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 0.75rem;
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   pointer-events: auto;
   cursor: pointer;
-  transition: border-color 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 
   &:hover {
-    border-color: rgba(255, 255, 255, 0.5);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
   }
 `
 
@@ -68,11 +70,11 @@ interface ZoomToggleProps {
 
 const ZoomToggle = ({ isEnabled, onToggle }: ZoomToggleProps) => {
   const handleToggle = () => {
-    console.log("Toggle clicked! Current state:", isEnabled, "New state:", !isEnabled)
+    // console.log("Toggle clicked! Current state:", isEnabled, "New state:", !isEnabled)
     onToggle(!isEnabled)
   }
 
-  console.log("ZoomToggle rendered with isEnabled:", isEnabled)
+  // console.log("ZoomToggle rendered with isEnabled:", isEnabled)
 
   return (
     <ToggleContainer onClick={handleToggle}>
