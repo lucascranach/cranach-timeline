@@ -72,7 +72,7 @@ const Atlas = () => {
 
   // Use custom hooks for controls and settings
   const controls = useAtlasControls()
-  const { enableZoomStep: enableZoomStepFromContext } = useZoomContext()
+  const { enableZoomStep: enableZoomStepFromContext, targetZoom } = useZoomContext()
 
   const {
     thumbnailWidth,
@@ -99,27 +99,34 @@ const Atlas = () => {
   // Use zoom state from context (UI toggle) instead of Leva
   const enableZoomStep = enableZoomStepFromContext
 
+  // Local state for smooth zoom animation
+  const [zoomProgress, setZoomProgress] = useState(0)
+  const zoomProgressRef = useRef(0)
+
   console.log("Atlas: enableZoomStep =", enableZoomStep, "zoomMultiplier =", zoomMultiplier)
 
-  // Apply zoom multiplier when zoom step is enabled
+  // Apply zoom multiplier with smooth interpolation
   const effectiveThumbnailWidth = useMemo(() => {
-    const result = enableZoomStep ? thumbnailWidth * zoomMultiplier : thumbnailWidth
+    const baseWidth = thumbnailWidth
+    const zoomedWidth = thumbnailWidth * zoomMultiplier
+    const result = baseWidth + (zoomedWidth - baseWidth) * zoomProgress
     console.log("Atlas: effectiveThumbnailWidth =", result)
     return result
-  }, [enableZoomStep, thumbnailWidth, zoomMultiplier])
+  }, [thumbnailWidth, zoomMultiplier, zoomProgress])
 
   const effectiveThumbnailHeight = useMemo(() => {
-    const result = enableZoomStep ? thumbnailHeight * zoomMultiplier : thumbnailHeight
+    const baseHeight = thumbnailHeight
+    const zoomedHeight = thumbnailHeight * zoomMultiplier
+    const result = baseHeight + (zoomedHeight - baseHeight) * zoomProgress
     console.log("Atlas: effectiveThumbnailHeight =", result)
     return result
-  }, [enableZoomStep, thumbnailHeight, zoomMultiplier])
+  }, [thumbnailHeight, zoomMultiplier, zoomProgress])
 
-  const effectiveYearSpacing = useMemo(
-    () => (enableZoomStep ? yearSpacing * zoomMultiplier : yearSpacing),
-    [enableZoomStep, yearSpacing, zoomMultiplier]
-  )
-
-  // Load and process atlas data
+  const effectiveYearSpacing = useMemo(() => {
+    const baseSpacing = yearSpacing
+    const zoomedSpacing = yearSpacing * zoomMultiplier
+    return baseSpacing + (zoomedSpacing - baseSpacing) * zoomProgress
+  }, [yearSpacing, zoomMultiplier, zoomProgress]) // Load and process atlas data
   const { atlasData, sortedImages, groupedByYear, yearKeys, yearPositions } = useAtlasData(effectiveYearSpacing)
 
   // Load events data
@@ -267,7 +274,49 @@ const Atlas = () => {
     }
   }, [])
 
-  useFrame((state) => {
+  // Track the camera position for maintaining zoom origin at screen center
+  const cameraXAtZoomStartRef = useRef<number | null>(null)
+  const zoomStartProgressRef = useRef(0)
+
+  useFrame((state, delta) => {
+    // Smooth zoom transition
+    const speed = 5 // Adjust for faster/slower transitions
+    const diff = targetZoom.current - zoomProgressRef.current
+
+    if (Math.abs(diff) > 0.001) {
+      // Capture the camera position when zoom starts
+      if (cameraXAtZoomStartRef.current === null) {
+        cameraXAtZoomStartRef.current = state.camera.position.x
+        zoomStartProgressRef.current = zoomProgressRef.current
+      }
+
+      const prevProgress = zoomProgressRef.current
+      zoomProgressRef.current += diff * delta * speed
+      // Clamp to avoid overshooting
+      zoomProgressRef.current = Math.max(0, Math.min(1, zoomProgressRef.current))
+
+      // Calculate the current and previous scale factors
+      const prevScale = 1 + (zoomMultiplier - 1) * prevProgress
+      const currentScale = 1 + (zoomMultiplier - 1) * zoomProgressRef.current
+      const scaleDelta = currentScale / prevScale
+
+      // Adjust camera to maintain screen center: scale camera position from origin
+      state.camera.position.x *= scaleDelta
+
+      // Update state to trigger re-renders (which will recalculate layout)
+      setZoomProgress(zoomProgressRef.current)
+    } else {
+      if (zoomProgressRef.current !== targetZoom.current) {
+        zoomProgressRef.current = targetZoom.current
+        setZoomProgress(zoomProgressRef.current)
+      }
+      // Reset references when zoom animation completes
+      if (cameraXAtZoomStartRef.current !== null) {
+        cameraXAtZoomStartRef.current = null
+      }
+    }
+
+    // Event selection logic
     const now = getNow()
     if (now < autoSelectBlockRef.current) return
     const groups = processedGroupsRef.current
