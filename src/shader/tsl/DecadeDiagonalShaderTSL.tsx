@@ -123,6 +123,7 @@ interface DecadeVerticalBackgroundProps extends DecadeVerticalShaderOptions {
   yearPositions?: Record<string, number>
   dashSpeed?: number // units per second to scroll dash pattern
   offset?: number // Y position offset for the entire background plane
+  intervalYears?: number // interval for vertical lines (default: 10 for decades)
 }
 
 export const DecadeDiagonalBackground = ({
@@ -133,6 +134,7 @@ export const DecadeDiagonalBackground = ({
   yearPositions,
   dashSpeed = 0,
   offset = 0,
+  intervalYears = 10,
   ...shaderOptions
 }: DecadeVerticalBackgroundProps) => {
   // Calculate decade positions from year data
@@ -148,9 +150,9 @@ export const DecadeDiagonalBackground = ({
     const expandedMinYear = minYear - 100
     const expandedMaxYear = maxYear + 100
 
-    // Find decade boundaries within the expanded year range
-    const startDecade = Math.floor(expandedMinYear / 10) * 10
-    const endDecade = Math.ceil(expandedMaxYear / 10) * 10
+    // Find interval boundaries within the expanded year range
+    const startInterval = Math.floor(expandedMinYear / intervalYears) * intervalYears
+    const endInterval = Math.ceil(expandedMaxYear / intervalYears) * intervalYears
 
     // Calculate average spacing from existing data for extrapolation
     const avgSpacing =
@@ -159,23 +161,23 @@ export const DecadeDiagonalBackground = ({
           (years[years.length - 1] - years[0])
         : 1
 
-    for (let decade = startDecade; decade <= endDecade; decade += 10) {
-      // Find the position of this decade year if it exists
-      const decadeStr = decade.toString()
-      if (yearPositions[decadeStr]) {
-        positions.push(yearPositions[decadeStr])
+    for (let interval = startInterval; interval <= endInterval; interval += intervalYears) {
+      // Find the position of this interval year if it exists
+      const intervalStr = interval.toString()
+      if (yearPositions[intervalStr]) {
+        positions.push(yearPositions[intervalStr])
       } else {
-        // Interpolate or extrapolate position for decades not in yearPositions
-        if (decade >= minYear && decade <= maxYear) {
+        // Interpolate or extrapolate position for intervals not in yearPositions
+        if (interval >= minYear && interval <= maxYear) {
           // Interpolate within the existing range
           const nearestYears = years
-            .filter((y) => Math.abs(y - decade) <= 5)
-            .sort((a, b) => Math.abs(a - decade) - Math.abs(b - decade))
+            .filter((y) => Math.abs(y - interval) <= intervalYears / 2)
+            .sort((a, b) => Math.abs(a - interval) - Math.abs(b - interval))
           if (nearestYears.length > 0) {
             const nearestYear = nearestYears[0]
             const nearestPos = yearPositions[nearestYear.toString()]
             if (nearestPos !== undefined) {
-              const yearDiff = decade - nearestYear
+              const yearDiff = interval - nearestYear
               positions.push(nearestPos + yearDiff * avgSpacing)
             }
           }
@@ -184,13 +186,13 @@ export const DecadeDiagonalBackground = ({
           const firstPos = yearPositions[years[0].toString()]
           const lastPos = yearPositions[years[years.length - 1].toString()]
 
-          if (decade < minYear) {
+          if (interval < minYear) {
             // Extrapolate to the left
-            const yearDiff = decade - years[0]
+            const yearDiff = interval - years[0]
             positions.push(firstPos + yearDiff * avgSpacing)
-          } else if (decade > maxYear) {
+          } else if (interval > maxYear) {
             // Extrapolate to the right
-            const yearDiff = decade - years[years.length - 1]
+            const yearDiff = interval - years[years.length - 1]
             positions.push(lastPos + yearDiff * avgSpacing)
           }
         }
@@ -198,7 +200,7 @@ export const DecadeDiagonalBackground = ({
     }
 
     return positions
-  }, [yearKeys, yearPositions])
+  }, [yearKeys, yearPositions, intervalYears])
   // Calculate appropriate width based on expanded year range
   const calculatedWidth = useMemo(() => {
     if (yearKeys && yearKeys.length > 0 && yearPositions) {

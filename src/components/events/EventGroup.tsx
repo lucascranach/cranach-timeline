@@ -77,13 +77,13 @@ const EventGroup = ({
     <group key={group.name} name={`event-group-${group.name}`}>
       {bounds ? (
         <>
-          <GroupLabel
+          {/* <GroupLabel
             text={group.name}
             position={[bounds.centerX - bounds.width / 2 - 0.5, bounds.centerY, 0.005]}
             color={outlineColor}
             fontSize={16}
             isActive={isGroupActive}
-          />
+          /> */}
           <GroupOutline
             width={bounds.width}
             height={bounds.height}

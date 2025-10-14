@@ -504,6 +504,23 @@ const Atlas = () => {
         gapLength={dashGap}
         dashSpeed={dashSpeed}
       />
+      {/* 5-year stripes that appear when zoomed */}
+      {zoomProgress > 0.3 && (
+        <DecadeDiagonalBackground
+          yearKeys={yearKeys}
+          yearPositions={yearPositions}
+          offset={5}
+          height={60}
+          lineWidth={0.08}
+          opacity={0.2 * zoomProgress}
+          lineColor={new THREE.Color(0.2, 0.2, 0.25)}
+          backgroundColor={new THREE.Color("#18181a")}
+          dashLength={0.5}
+          gapLength={0.5}
+          dashSpeed={dashSpeed * 0.5}
+          intervalYears={5} // 5-year intervals instead of decades
+        />
+      )}
       <group position={[0, atlasY, 0]}>
         {/* Vertical decade background */}
         {/* <CameraPlane offset={[0, -25, -60]} size={[220, 49.1]} color={"#62646f"} opacity={0.6} depthTest={true} /> */}
@@ -520,6 +537,8 @@ const Atlas = () => {
             thumbnailHeight={effectiveThumbnailHeight}
             showAllYearLabels={showAllYearLabels}
             majorTickEvery={majorTickEvery}
+            yearPositions={yearPositions}
+            isZoomed={zoomProgress > 0.5}
           />
         </group>
 
