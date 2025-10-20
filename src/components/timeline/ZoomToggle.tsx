@@ -70,11 +70,11 @@ interface ZoomToggleProps {
 
 const ZoomToggle = ({ isEnabled, onToggle }: ZoomToggleProps) => {
   const handleToggle = () => {
-    // console.log("Toggle clicked! Current state:", isEnabled, "New state:", !isEnabled)
+    console.log("Toggle clicked! Current state:", isEnabled, "New state:", !isEnabled)
     onToggle(!isEnabled)
   }
 
-  // console.log("ZoomToggle rendered with isEnabled:", isEnabled)
+  console.log("ZoomToggle rendered with isEnabled:", isEnabled)
 
   return (
     <ToggleContainer onClick={handleToggle}>
