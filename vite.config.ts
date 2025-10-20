@@ -1,4 +1,5 @@
 import * as path from "path"
+import tailwindcss from "@tailwindcss/vite"
 import { defineConfig, loadEnv } from "vite"
 import react from "@vitejs/plugin-react"
 
@@ -8,7 +9,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "")
 
   return {
-    plugins: [react()],
+    plugins: [react(), tailwindcss()],
     base: env.VITE_PATH, // Use the VITE_PATH environment variable for the base path
     define: {
       "process.env": env,

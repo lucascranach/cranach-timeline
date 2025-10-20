@@ -8,6 +8,9 @@ import { ZoomProvider, useZoomContext } from "./hooks/useZoomContext"
 import { SelectedEventProvider } from "./hooks/useSelectedEventContext"
 import { RelatedEventsProvider, useRelatedEventsContext } from "./hooks/useRelatedEventsContext"
 
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+import { AppSidebar } from "@/components/layout/app-sidebar"
+
 import styled from "styled-components"
 
 const Title = styled.h1`
@@ -30,7 +33,6 @@ const AppContent = () => {
 
   return (
     <>
-      <Title>Lucas Cranach Timeline</Title>
       <ZoomToggle isEnabled={enableZoomStep} onToggle={setEnableZoomStep} />
       <RelatedEventsToggle isEnabled={keepRelatedEventsOpen} onToggle={setKeepRelatedEventsOpen} />
       <Leva collapsed hidden />
@@ -45,7 +47,19 @@ function App() {
     <ZoomProvider>
       <SelectedEventProvider>
         <RelatedEventsProvider>
-          <AppContent />
+          <SidebarProvider>
+            <AppSidebar />
+            {/* <SidebarTrigger
+              style={{
+                position: "absolute",
+                color: "red",
+                top: "1rem",
+                left: "1rem",
+                zIndex: 10000,
+              }}
+            /> */}
+            <AppContent />
+          </SidebarProvider>
         </RelatedEventsProvider>
       </SelectedEventProvider>
     </ZoomProvider>
