@@ -1,8 +1,8 @@
 import "./styles/App.css"
 
-import Scene from "./components/Scene"
-import ZoomToggle from "./components/ZoomToggle"
-import RelatedEventsToggle from "./components/RelatedEventsToggle"
+import Scene from "@/components/timeline/Scene"
+import ZoomToggle from "@/components/timeline/ZoomToggle"
+import RelatedEventsToggle from "@/components/timeline/RelatedEventsToggle"
 import { Leva } from "leva"
 import { ZoomProvider, useZoomContext } from "./hooks/useZoomContext"
 import { SelectedEventProvider } from "./hooks/useSelectedEventContext"

@@ -1,8 +1,6 @@
-import { useLoader, useFrame } from "@react-three/fiber"
+import { useLoader } from "@react-three/fiber"
 import * as THREE from "three"
-import CameraPlane from "./CameraPlane"
 import { AtlasShaderMaterialTSL } from "@/shader/tsl/AtlasShaderMaterialTSL"
-import { DecadeDiagonalBackground } from "@/shader/tsl/DecadeDiagonalShaderTSL"
 import { useMemo, useState, useCallback, useEffect, useRef } from "react"
 import { useAtlasControls } from "@/hooks/useAtlasControls"
 import { useAtlasData } from "@/hooks/useAtlasData"
@@ -10,64 +8,19 @@ import { useAtlasGeometry } from "@/hooks/useAtlasGeometry"
 import { useAtlasTransforms } from "@/hooks/useAtlasTransforms"
 import { useZoomContext } from "@/hooks/useZoomContext"
 import { useSelectedEvent } from "@/hooks/useSelectedEventContext"
-import TimelineAxis from "./TimelineAxis"
+import { useZoomAnimation } from "@/hooks/useZoomAnimation"
+import { useKeyboardNavigation } from "@/hooks/useKeyboardNavigation"
+import { useEventAutoSelection } from "@/hooks/useEventAutoSelection"
+import { useEvents } from "@/hooks/useEvents"
 import YearLabels from "./YearLabels"
 import ThumbnailMesh from "./ThumbnailMesh"
 import FallbackUI from "./FallbackUI"
-import Events from "./events/Events"
+import DecadeBackgrounds from "./DecadeBackgrounds"
+import Events from "@/components/events/Events"
 import EventInfo3D from "./EventInfo3D"
-import { ProcessedEventGroup } from "../types/events"
-import { useEvents } from "@/hooks/useEvents"
-
-// Native InstancedMesh replacement for previous createInstances usage
-// Each instance represents one thumbnail quad with per-instance transform & UV cropping via instanced attribute.
-
-interface AtlasImage {
-  filename: string
-  x: number
-  y: number
-  width: number
-  height: number
-  sorting_number?: string
-}
-
-interface AtlasData {
-  atlas: {
-    width: number
-    height: number
-  }
-  images: AtlasImage[]
-}
-
-// Event files configuration with colors
-const EVENT_FILE_CONFIGS = [
-  {
-    file: "/timeline/events/cranachElderEvents_en.json",
-    name: "Cranach Elder",
-    color: "#FEB701",
-  },
-  {
-    file: "/timeline/events/cranachYoungerEvents_en.json",
-    name: "Cranach Younger",
-    color: "#FEB701",
-  },
-  {
-    file: "/timeline/events/historyEvents_en.json",
-    name: "History",
-    color: "#FEB701",
-  },
-  {
-    file: "/timeline/events/lutherEvents_en.json",
-    name: "Luther",
-    color: "#FEB701",
-  },
-]
-
-type SelectionState = {
-  groupIndex: number
-  eventIndex: number
-  centerOnSelect?: boolean
-}
+import { ProcessedEventGroup } from "@/types/events"
+import { AtlasImage, SelectionState } from "@/types/atlas"
+import { EVENT_FILE_CONFIGS } from "@/constants/eventConfigs"
 
 const Atlas = () => {
   const atlasTexture = useLoader(THREE.TextureLoader, "/timeline/atlas/texture_atlas.webp")
@@ -88,7 +41,6 @@ const Atlas = () => {
     columnsPerYear,
     rowSpacing,
     yearSpacing,
-    showAxis,
     showAllYearLabels,
     majorTickEvery,
     eventGap,
@@ -102,31 +54,23 @@ const Atlas = () => {
   // Use zoom state from context (UI toggle) instead of Leva
   const enableZoomStep = enableZoomStepFromContext
 
-  // Local state for smooth zoom animation
-  const [zoomProgress, setZoomProgress] = useState(0)
-  const zoomProgressRef = useRef(0)
+  // Zoom animation hook
+  const { zoomProgress, zoomOriginX, setZoomOriginX, isZooming } = useZoomAnimation({
+    targetZoom,
+    zoomMultiplier,
+  })
 
-  // Store the zoom origin (screen center in world coordinates) when zoom starts
-  const [zoomOriginX, setZoomOriginX] = useState<number | null>(null)
-  const zoomOriginXRef = useRef<number | null>(null)
-
-  // console.log("Atlas: enableZoomStep =", enableZoomStep, "zoomMultiplier =", zoomMultiplier)
-
-  // Apply zoom multiplier with smooth interpolation
+  // Calculate effective dimensions with zoom
   const effectiveThumbnailWidth = useMemo(() => {
     const baseWidth = thumbnailWidth
     const zoomedWidth = thumbnailWidth * zoomMultiplier
-    const result = baseWidth + (zoomedWidth - baseWidth) * zoomProgress
-    // console.log("Atlas: effectiveThumbnailWidth =", result)
-    return result
+    return baseWidth + (zoomedWidth - baseWidth) * zoomProgress
   }, [thumbnailWidth, zoomMultiplier, zoomProgress])
 
   const effectiveThumbnailHeight = useMemo(() => {
     const baseHeight = thumbnailHeight
     const zoomedHeight = thumbnailHeight * zoomMultiplier
-    const result = baseHeight + (zoomedHeight - baseHeight) * zoomProgress
-    // console.log("Atlas: effectiveThumbnailHeight =", result)
-    return result
+    return baseHeight + (zoomedHeight - baseHeight) * zoomProgress
   }, [thumbnailHeight, zoomMultiplier, zoomProgress])
 
   const effectiveYearSpacing = useMemo(() => {
@@ -146,19 +90,15 @@ const Atlas = () => {
   // Load events data
   const { eventGroups } = useEvents(EVENT_FILE_CONFIGS)
 
-  // Processed groups reference (from Events child)
-  const processedGroupsRef = useRef<ProcessedEventGroup[]>([])
+  // Selection state
   const [selection, setSelection] = useState<SelectionState | null>(null)
-  const selectionRef = useRef<SelectionState | null>(null)
-  const autoSelectBlockRef = useRef<number>(0)
-  const manualClearBlockRef = useRef<number>(0)
-  const getNow = useCallback(() => (typeof performance !== "undefined" ? performance.now() : Date.now()), [])
+  const processedGroupsRef = useRef<ProcessedEventGroup[]>([])
 
-  useEffect(() => {
-    selectionRef.current = selection
-  }, [selection])
-
-  // Update selected event context when selection changes
+  // Helper to dispatch camera center event
+  const centerOnX = useCallback((x: number) => {
+    const evt = new CustomEvent("timeline-center", { detail: { x } })
+    window.dispatchEvent(evt)
+  }, [])
   useEffect(() => {
     if (!selection) {
       setSelectedEvent(null, null, null)

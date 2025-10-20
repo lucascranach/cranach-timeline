@@ -2,8 +2,8 @@ import { Html } from "@react-three/drei"
 import styled from "styled-components"
 import { useEffect, useState } from "react"
 import { FaChevronUp, FaChevronDown } from "react-icons/fa"
-import { ProcessedEvent, ProcessedEventGroup } from "../types/events"
-import { useRelatedEventsContext } from "../hooks/useRelatedEventsContext"
+import { ProcessedEvent, ProcessedEventGroup } from "@/types/events"
+import { useRelatedEventsContext } from "@/hooks/useRelatedEventsContext"
 
 const EventInfoContainer = styled.div`
   max-width: 500px;

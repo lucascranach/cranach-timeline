@@ -1,22 +1,6 @@
 import { useState, useEffect, useMemo } from "react"
 import { groupResultsByYear } from "@/utils/atlasUtils"
-
-interface AtlasImage {
-  filename: string
-  x: number
-  y: number
-  width: number
-  height: number
-  sorting_number?: string
-}
-
-interface AtlasData {
-  atlas: {
-    width: number
-    height: number
-  }
-  images: AtlasImage[]
-}
+import { AtlasData, AtlasImage } from "@/types/atlas"
 
 export const useAtlasData = (
   yearSpacing: number,
