@@ -91,6 +91,7 @@ const Atlas = () => {
   // Selection state management
   const [selection, setSelection] = useState<SelectionState | null>(null)
   const processedGroupsRef = useRef<ProcessedEventGroup[]>([])
+  const [selectedColumnInfo, setSelectedColumnInfo] = useState<{ year: string; column: number } | null>(null)
 
   // Camera centering helper
   const centerOnX = useCallback((x: number) => {
@@ -184,6 +185,17 @@ const Atlas = () => {
 
       const column = indexInYear % columnsPerYear
 
+      // Toggle: if clicking on the same column, deselect it
+      if (selectedColumnInfo && selectedColumnInfo.year === year && selectedColumnInfo.column === column) {
+        setSelectedColumnInfo(null)
+        setColumnData(null)
+        console.log("Deselected column")
+        return
+      }
+
+      // Store the selected column info
+      setSelectedColumnInfo({ year, column })
+
       // Get all images in the same column
       const columnImages = yearItems.filter((_, idx) => idx % columnsPerYear === column)
 
@@ -209,7 +221,7 @@ const Atlas = () => {
         )
       }
     },
-    [atlasData, groupedByYear, columnsPerYear, setColumnData]
+    [atlasData, groupedByYear, columnsPerYear, setColumnData, selectedColumnInfo]
   )
 
   // Create atlas material
@@ -225,12 +237,21 @@ const Atlas = () => {
   }, [atlasTexture, atlasData, cropMode, cropOffsetX, cropOffsetY, cropScale])
 
   // Geometry with attributes (uses base dimensions to prevent recreation during zoom)
-  const geometryWithAttributes = useAtlasGeometry(atlasData, sortedImages, thumbnailWidth, thumbnailHeight, {
-    mode: cropMode,
-    offsetX: cropOffsetX,
-    offsetY: cropOffsetY,
-    scale: cropScale,
-  })
+  const geometryWithAttributes = useAtlasGeometry(
+    atlasData,
+    sortedImages,
+    thumbnailWidth,
+    thumbnailHeight,
+    {
+      mode: cropMode,
+      offsetX: cropOffsetX,
+      offsetY: cropOffsetY,
+      scale: cropScale,
+    },
+    selectedColumnInfo,
+    columnsPerYear,
+    groupedByYear
+  )
 
   // Instance transforms (uses effective dimensions for proper layout during zoom)
   const instanceTransforms = useAtlasTransforms(

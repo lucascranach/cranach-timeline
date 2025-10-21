@@ -25,18 +25,27 @@ interface CropSettings {
   scale: number
 }
 
+interface SelectedColumnInfo {
+  year: string
+  column: number
+}
+
 export const useAtlasGeometry = (
   atlasData: AtlasData | null,
   sortedImages: AtlasImage[],
   thumbnailWidth: number,
   thumbnailHeight: number,
-  cropSettings: CropSettings
+  cropSettings: CropSettings,
+  selectedColumnInfo: SelectedColumnInfo | null = null,
+  columnsPerYear: number = 3,
+  groupedByYear: Record<string, AtlasImage[]> = {}
 ) => {
   return useMemo(() => {
     if (!atlasData || !sortedImages.length) return null
 
     // Create UV offset data for each instance
     const uvOffsets = new Float32Array(sortedImages.length * 4) // 4 values per instance (u1, v1, u2, v2)
+    const opacities = new Float32Array(sortedImages.length) // 1 value per instance (opacity)
 
     sortedImages.forEach((imageData, i) => {
       const atlasWidth = atlasData.atlas.width
@@ -102,11 +111,35 @@ export const useAtlasGeometry = (
       uvOffsets[i * 4 + 1] = v1
       uvOffsets[i * 4 + 2] = u2
       uvOffsets[i * 4 + 3] = v2
+
+      // Calculate opacity based on selected column
+      if (selectedColumnInfo) {
+        const sortingNumber = imageData.sorting_number || ""
+        const year = sortingNumber.split("-")[0]
+
+        if (year === selectedColumnInfo.year) {
+          const yearItems = groupedByYear[year] || []
+          const indexInYear = yearItems.findIndex((img) => img.sorting_number === imageData.sorting_number)
+
+          if (indexInYear !== -1) {
+            const column = indexInYear % columnsPerYear
+            // Full opacity for selected column, reduced for others in the same year
+            opacities[i] = column === selectedColumnInfo.column ? 1.0 : 0.2
+          } else {
+            opacities[i] = 0.2 // Grey out if not found
+          }
+        } else {
+          opacities[i] = 0.2 // Grey out other years
+        }
+      } else {
+        opacities[i] = 1.0 // Full opacity when nothing is selected
+      }
     })
 
     // Create base geometry (unit plane that will be scaled per instance)
     const geometry = new THREE.PlaneGeometry(1, 1)
     geometry.setAttribute("uvOffset", new THREE.InstancedBufferAttribute(uvOffsets, 4))
+    geometry.setAttribute("instanceOpacity", new THREE.InstancedBufferAttribute(opacities, 1))
 
     return geometry
   }, [
@@ -118,5 +151,8 @@ export const useAtlasGeometry = (
     cropSettings.scale,
     thumbnailWidth,
     thumbnailHeight,
+    selectedColumnInfo,
+    columnsPerYear,
+    groupedByYear,
   ])
 }

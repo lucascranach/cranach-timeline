@@ -7,6 +7,7 @@ export const AtlasShaderMaterialTSL = (atlasTexture: THREE.Texture, cropSettings
   const fragmentUV = TSL.uv()
 
   const uvOffset = TSL.attribute("uvOffset", "vec4")
+  const instanceOpacity = TSL.attribute("instanceOpacity", "float")
 
   const atlasUV = TSL.mix(
     uvOffset.xy, // Start point in atlas (u1, v1) - already cropped
@@ -16,7 +17,7 @@ export const AtlasShaderMaterialTSL = (atlasTexture: THREE.Texture, cropSettings
 
   const sampledColor = atlasTextureNode.sample(atlasUV)
 
-  const alpha = sampledColor.a
+  const alpha = TSL.mul(sampledColor.a, instanceOpacity)
   const finalColor = TSL.vec4(sampledColor.rgb, alpha)
 
   const material = new THREE.NodeMaterial()
