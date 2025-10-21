@@ -7,18 +7,25 @@ interface ColumnData {
   images: AtlasImage[]
 }
 
+type ViewMode = "ids" | "thumbnails"
+
 interface SidebarGalleryContextType {
   columnData: ColumnData | null
   setColumnData: (data: ColumnData | null) => void
+  viewMode: ViewMode
+  setViewMode: (mode: ViewMode) => void
 }
 
 const SidebarGalleryContext = createContext<SidebarGalleryContextType | undefined>(undefined)
 
 export const SidebarGalleryProvider = ({ children }: { children: ReactNode }) => {
   const [columnData, setColumnData] = useState<ColumnData | null>(null)
+  const [viewMode, setViewMode] = useState<ViewMode>("ids")
 
   return (
-    <SidebarGalleryContext.Provider value={{ columnData, setColumnData }}>{children}</SidebarGalleryContext.Provider>
+    <SidebarGalleryContext.Provider value={{ columnData, setColumnData, viewMode, setViewMode }}>
+      {children}
+    </SidebarGalleryContext.Provider>
   )
 }
 

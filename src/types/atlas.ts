@@ -5,6 +5,7 @@ export interface AtlasImage {
   width: number
   height: number
   sorting_number?: string
+  original_url?: string
 }
 
 export interface AtlasData {
