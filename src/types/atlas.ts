@@ -6,6 +6,7 @@ export interface AtlasImage {
   height: number
   sorting_number?: string
   original_url?: string
+  "inventory_number\t"?: string
 }
 
 export interface AtlasData {

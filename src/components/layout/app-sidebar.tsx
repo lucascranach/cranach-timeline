@@ -13,8 +13,8 @@ export function AppSidebar() {
     setLoadedImages(new Set())
   }, [columnData])
 
-  const handleImageLoad = (sortingNumber: string) => {
-    setLoadedImages((prev) => new Set(prev).add(sortingNumber))
+  const handleImageLoad = (identifier: string) => {
+    setLoadedImages((prev) => new Set(prev).add(identifier))
   }
 
   return (
@@ -60,23 +60,32 @@ export function AppSidebar() {
 
                 {viewMode === "ids" ? (
                   <div className="space-y-1">
-                    {columnData.images.map((image, idx) => (
-                      <div
-                        key={image.sorting_number || idx}
-                        className="text-sm font-mono bg-secondary/50 px-2 py-1 rounded"
-                      >
-                        {image.sorting_number || image.filename}
-                      </div>
-                    ))}
+                    {columnData.images.map((image, idx) => {
+                      const inventoryNumber = image["inventory_number\t"]?.trim() || image.sorting_number
+                      const url = inventoryNumber ? `https://lucascranach.org/en/${inventoryNumber}` : null
+                      return (
+                        <div
+                          key={image.sorting_number || idx}
+                          className="text-sm font-mono bg-secondary/50 px-2 py-1 rounded cursor-pointer hover:bg-secondary transition-colors"
+                          onClick={() => url && window.open(url, "_blank")}
+                        >
+                          {inventoryNumber || image.filename}
+                        </div>
+                      )
+                    })}
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 gap-2">
                     {columnData.images.map((image, idx) => {
-                      const isLoaded = loadedImages.has(image.sorting_number || "")
+                      const identifier = image.sorting_number || `${idx}`
+                      const isLoaded = loadedImages.has(identifier)
+                      const inventoryNumber = image["inventory_number\t"]?.trim() || image.sorting_number
+                      const url = inventoryNumber ? `https://lucascranach.org/en/${inventoryNumber}` : null
                       return (
                         <div
-                          key={image.sorting_number || idx}
-                          className="relative bg-secondary rounded overflow-hidden border border-border aspect-3/4"
+                          key={identifier}
+                          className="relative bg-secondary rounded overflow-hidden border border-border aspect-3/4 cursor-pointer hover:border-primary transition-colors"
+                          onClick={() => url && window.open(url, "_blank")}
                         >
                           {!isLoaded && (
                             <div className="absolute inset-0 flex items-center justify-center">
@@ -86,12 +95,12 @@ export function AppSidebar() {
                           {image.original_url ? (
                             <img
                               src={image.original_url}
-                              alt={image.sorting_number || image.filename}
+                              alt={inventoryNumber || image.filename}
                               loading="lazy"
                               className={`w-full h-full object-contain transition-opacity duration-300 ${
                                 isLoaded ? "opacity-100" : "opacity-0"
                               }`}
-                              onLoad={() => handleImageLoad(image.sorting_number || "")}
+                              onLoad={() => handleImageLoad(identifier)}
                               onError={(e) => {
                                 // Fallback to a placeholder or hide on error
                                 e.currentTarget.style.display = "none"
@@ -103,7 +112,7 @@ export function AppSidebar() {
                             </div>
                           )}
                           <div className="absolute bottom-0 left-0 right-0 bg-black/75 px-1 py-0.5">
-                            <p className="text-xs font-mono text-white truncate">{image.sorting_number}</p>
+                            <p className="text-xs font-mono text-white truncate">{inventoryNumber}</p>
                           </div>
                         </div>
                       )
