@@ -1,12 +1,13 @@
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarHeader } from "@/components/ui/sidebar"
 import { useSidebarGallery } from "@/hooks/useSidebarGalleryContext"
 import { Button } from "@/components/ui/button"
-import { Image, List } from "lucide-react"
-import { useState, useEffect } from "react"
+import { Image, List, Filter } from "lucide-react"
+import { useState, useEffect, useMemo } from "react"
 
 export function AppSidebar() {
   const { columnData, viewMode, setViewMode } = useSidebarGallery()
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set())
+  const [entityTypeFilter, setEntityTypeFilter] = useState<string>("ALL")
 
   // Reset loaded images when column data changes
   useEffect(() => {
@@ -16,6 +17,25 @@ export function AppSidebar() {
   const handleImageLoad = (identifier: string) => {
     setLoadedImages((prev) => new Set(prev).add(identifier))
   }
+
+  // Get unique entity types from the column data
+  const entityTypes = useMemo(() => {
+    if (!columnData) return []
+    const types = new Set(columnData.images.map((img) => img.entity_type).filter(Boolean))
+    return Array.from(types).sort()
+  }, [columnData])
+
+  // Filter images based on selected entity type
+  const filteredImages = useMemo(() => {
+    if (!columnData) return []
+    if (entityTypeFilter === "ALL") return columnData.images
+    return columnData.images.filter((img) => img.entity_type === entityTypeFilter)
+  }, [columnData, entityTypeFilter])
+
+  // Reset filter when column changes
+  useEffect(() => {
+    setEntityTypeFilter("ALL")
+  }, [columnData])
 
   return (
     <Sidebar>
@@ -55,12 +75,47 @@ export function AppSidebar() {
               </h3>
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">
-                  {columnData.images.length} work{columnData.images.length !== 1 ? "s" : ""} in this column
+                  {filteredImages.length} work{filteredImages.length !== 1 ? "s" : ""} in this column
+                  {entityTypeFilter !== "ALL" && ` (filtered by ${entityTypeFilter})`}
                 </p>
+
+                {/* Entity Type Filter */}
+                {entityTypes.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm font-medium">
+                      <Filter className="h-4 w-4" />
+                      <span>Filter by Type</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      <Button
+                        variant={entityTypeFilter === "ALL" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setEntityTypeFilter("ALL")}
+                        className="h-7 text-xs"
+                      >
+                        All ({columnData.images.length})
+                      </Button>
+                      {entityTypes.map((type) => {
+                        const count = columnData.images.filter((img) => img.entity_type === type).length
+                        return (
+                          <Button
+                            key={type}
+                            variant={entityTypeFilter === type ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setEntityTypeFilter(type)}
+                            className="h-7 text-xs"
+                          >
+                            {type} ({count})
+                          </Button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 {viewMode === "ids" ? (
                   <div className="space-y-1">
-                    {columnData.images.map((image, idx) => {
+                    {filteredImages.map((image, idx) => {
                       const inventoryNumber = image["inventory_number\t"]?.trim() || image.sorting_number
                       const url = inventoryNumber ? `https://lucascranach.org/en/${inventoryNumber}` : null
                       return (
@@ -76,7 +131,7 @@ export function AppSidebar() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 gap-2">
-                    {columnData.images.map((image, idx) => {
+                    {filteredImages.map((image, idx) => {
                       const identifier = image.sorting_number || `${idx}`
                       const isLoaded = loadedImages.has(identifier)
                       const inventoryNumber = image["inventory_number\t"]?.trim() || image.sorting_number

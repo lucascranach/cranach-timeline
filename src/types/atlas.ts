@@ -7,6 +7,8 @@ export interface AtlasImage {
   sorting_number?: string
   original_url?: string
   "inventory_number\t"?: string
+  entity_type?: string
+  title?: string
 }
 
 export interface AtlasData {
