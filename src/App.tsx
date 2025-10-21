@@ -7,6 +7,7 @@ import { Leva } from "leva"
 import { ZoomProvider, useZoomContext } from "./hooks/useZoomContext"
 import { SelectedEventProvider } from "./hooks/useSelectedEventContext"
 import { RelatedEventsProvider, useRelatedEventsContext } from "./hooks/useRelatedEventsContext"
+import { SidebarGalleryProvider } from "./hooks/useSidebarGalleryContext"
 
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/layout/app-sidebar"
@@ -27,12 +28,33 @@ const Title = styled.h1`
   pointer-events: none;
 `
 
+const SidebarTriggerButton = styled(SidebarTrigger)`
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.75);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  backdrop-filter: blur(20px);
+  font-family: "IBMPlexSans", sans-serif;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.85);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+`
+
 const AppContent = () => {
   const { enableZoomStep, setEnableZoomStep } = useZoomContext()
   const { keepRelatedEventsOpen, setKeepRelatedEventsOpen } = useRelatedEventsContext()
 
   return (
     <>
+      <SidebarTriggerButton />
       <ZoomToggle isEnabled={enableZoomStep} onToggle={setEnableZoomStep} />
       <RelatedEventsToggle isEnabled={keepRelatedEventsOpen} onToggle={setKeepRelatedEventsOpen} />
       <Leva collapsed hidden />
@@ -47,19 +69,12 @@ function App() {
     <ZoomProvider>
       <SelectedEventProvider>
         <RelatedEventsProvider>
-          <SidebarProvider>
-            <AppSidebar />
-            {/* <SidebarTrigger
-              style={{
-                position: "absolute",
-                color: "red",
-                top: "1rem",
-                left: "1rem",
-                zIndex: 10000,
-              }}
-            /> */}
-            <AppContent />
-          </SidebarProvider>
+          <SidebarGalleryProvider>
+            <SidebarProvider>
+              <AppSidebar />
+              <AppContent />
+            </SidebarProvider>
+          </SidebarGalleryProvider>
         </RelatedEventsProvider>
       </SelectedEventProvider>
     </ZoomProvider>

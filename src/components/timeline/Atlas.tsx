@@ -12,6 +12,7 @@ import { useZoomAnimation } from "@/hooks/useZoomAnimation"
 import { useKeyboardNavigation } from "@/hooks/useKeyboardNavigation"
 import { useEventAutoSelection } from "@/hooks/useEventAutoSelection"
 import { useEvents } from "@/hooks/useEvents"
+import { useSidebarGallery } from "@/hooks/useSidebarGalleryContext"
 import YearLabels from "./YearLabels"
 import ThumbnailMesh from "./ThumbnailMesh"
 import FallbackUI from "./FallbackUI"
@@ -32,6 +33,7 @@ const Atlas = () => {
   const controls = useAtlasControls()
   const { targetZoom } = useZoomContext()
   const { setSelectedEvent, selectedEvent, selectedGroupName, selectedEventPosition } = useSelectedEvent()
+  const { setColumnData } = useSidebarGallery()
 
   const {
     thumbnailWidth,
@@ -164,10 +166,51 @@ const Atlas = () => {
     setSelection(null)
   }, [])
 
-  const handleThumbnailClick = useCallback((index: number, imageData?: AtlasImage) => {
-    if (!imageData) return
-    console.log(`Thumbnail ${index} clicked`, imageData.sorting_number)
-  }, [])
+  const handleThumbnailClick = useCallback(
+    (index: number, imageData?: AtlasImage) => {
+      if (!imageData || !atlasData) return
+      console.log(`Thumbnail ${index} clicked`, imageData.sorting_number)
+
+      // Extract year from sorting_number (format: "YYYY-XXX")
+      const sortingNumber = imageData.sorting_number || ""
+      const year = sortingNumber.split("-")[0]
+
+      // Find all images in the same year
+      const yearItems = groupedByYear[year] || []
+
+      // Find which column this image is in within its year
+      const indexInYear = yearItems.findIndex((img) => img.sorting_number === imageData.sorting_number)
+      if (indexInYear === -1) return
+
+      const column = indexInYear % columnsPerYear
+
+      // Get all images in the same column
+      const columnImages = yearItems.filter((_, idx) => idx % columnsPerYear === column)
+
+      // Remove duplicates based on sorting_number
+      const uniqueColumnImages = columnImages.filter(
+        (image, idx, arr) => arr.findIndex((img) => img.sorting_number === image.sorting_number) === idx
+      )
+
+      // Set the column data for the sidebar
+      setColumnData({
+        year,
+        column,
+        images: uniqueColumnImages,
+      })
+
+      console.log(
+        `Column ${column} in year ${year}:`,
+        uniqueColumnImages.map((img) => img.sorting_number)
+      )
+      if (columnImages.length !== uniqueColumnImages.length) {
+        console.warn(
+          `⚠️ Found ${columnImages.length - uniqueColumnImages.length} duplicate(s) in column ${column} of year ${year}`
+        )
+      }
+    },
+    [atlasData, groupedByYear, columnsPerYear, setColumnData]
+  )
 
   // Create atlas material
   const atlasMaterial = useMemo(() => {
