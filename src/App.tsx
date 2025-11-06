@@ -3,11 +3,13 @@ import "./styles/App.css"
 import Scene from "@/components/timeline/Scene"
 import ZoomToggle from "@/components/timeline/ZoomToggle"
 import RelatedEventsToggle from "@/components/timeline/RelatedEventsToggle"
+import { ImagePrefetchIndicator } from "@/components/timeline/ImagePrefetchIndicator"
 import { Leva } from "leva"
 import { ZoomProvider, useZoomContext } from "./hooks/useZoomContext"
 import { SelectedEventProvider } from "./hooks/useSelectedEventContext"
 import { RelatedEventsProvider, useRelatedEventsContext } from "./hooks/useRelatedEventsContext"
 import { SidebarGalleryProvider } from "./hooks/useSidebarGalleryContext"
+import { Provider as JotaiProvider } from "jotai"
 
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/layout/app-sidebar"
@@ -57,6 +59,7 @@ const AppContent = () => {
       <SidebarTriggerButton />
       <ZoomToggle isEnabled={enableZoomStep} onToggle={setEnableZoomStep} />
       <RelatedEventsToggle isEnabled={keepRelatedEventsOpen} onToggle={setKeepRelatedEventsOpen} />
+      <ImagePrefetchIndicator />
       <Leva collapsed hidden />
 
       <Scene />
@@ -66,18 +69,20 @@ const AppContent = () => {
 
 function App() {
   return (
-    <ZoomProvider>
-      <SelectedEventProvider>
-        <RelatedEventsProvider>
-          <SidebarGalleryProvider>
-            <SidebarProvider>
-              <AppSidebar />
-              <AppContent />
-            </SidebarProvider>
-          </SidebarGalleryProvider>
-        </RelatedEventsProvider>
-      </SelectedEventProvider>
-    </ZoomProvider>
+    <JotaiProvider>
+      <ZoomProvider>
+        <SelectedEventProvider>
+          <RelatedEventsProvider>
+            <SidebarGalleryProvider>
+              <SidebarProvider>
+                <AppSidebar />
+                <AppContent />
+              </SidebarProvider>
+            </SidebarGalleryProvider>
+          </RelatedEventsProvider>
+        </SelectedEventProvider>
+      </ZoomProvider>
+    </JotaiProvider>
   )
 }
 

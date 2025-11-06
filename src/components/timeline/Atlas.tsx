@@ -14,6 +14,7 @@ import { useEventAutoSelection } from "@/hooks/useEventAutoSelection"
 import { useEvents } from "@/hooks/useEvents"
 import { useSidebarGallery } from "@/hooks/useSidebarGalleryContext"
 import { useFocusedYear } from "@/hooks/useFocusedYear"
+import { useImagePrefetch } from "@/hooks/useImagePrefetch"
 import YearLabels from "./YearLabels"
 import ThumbnailMesh from "./ThumbnailMesh"
 import FallbackUI from "./FallbackUI"
@@ -88,6 +89,9 @@ const Atlas = () => {
   )
 
   const { eventGroups } = useEvents(EVENT_FILE_CONFIGS)
+
+  // Prefetch all images in the background
+  const prefetchProgress = useImagePrefetch(sortedImages)
 
   // Selection state management
   const [selection, setSelection] = useState<SelectionState | null>(null)

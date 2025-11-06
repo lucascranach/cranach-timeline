@@ -20,6 +20,12 @@ interface FocusedYearData {
   images: AtlasImage[]
 }
 
+interface YearSlide {
+  year: number
+  events: ProcessedEventGroup[]
+  images: AtlasImage[]
+}
+
 type ViewMode = "ids" | "thumbnails"
 type SidebarMode = "column" | "event" | "focused-year" | null
 
@@ -35,6 +41,10 @@ interface SidebarGalleryContextType {
   setViewMode: (mode: ViewMode) => void
   sidebarMode: SidebarMode
   setSidebarMode: (mode: SidebarMode) => void
+  scrollDirection: "left" | "right" | null
+  setScrollDirection: (direction: "left" | "right" | null) => void
+  allYearSlides: YearSlide[]
+  setAllYearSlides: (slides: YearSlide[]) => void
 }
 
 const SidebarGalleryContext = createContext<SidebarGalleryContextType | undefined>(undefined)
@@ -45,6 +55,8 @@ export const SidebarGalleryProvider = ({ children }: { children: ReactNode }) =>
   const [focusedYearData, setFocusedYearData] = useState<FocusedYearData | null>(null)
   const [viewMode, setViewMode] = useState<ViewMode>("ids")
   const [sidebarMode, setSidebarMode] = useState<SidebarMode>(null)
+  const [scrollDirection, setScrollDirection] = useState<"left" | "right" | null>(null)
+  const [allYearSlides, setAllYearSlides] = useState<YearSlide[]>([])
 
   return (
     <SidebarGalleryContext.Provider
@@ -60,6 +72,10 @@ export const SidebarGalleryProvider = ({ children }: { children: ReactNode }) =>
         setViewMode,
         sidebarMode,
         setSidebarMode,
+        scrollDirection,
+        setScrollDirection,
+        allYearSlides,
+        setAllYearSlides,
       }}
     >
       {children}
