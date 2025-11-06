@@ -1,6 +1,7 @@
 import { EventsProps } from "../../types/events"
 import { useEventProcessing, usePillControls } from "../../hooks/useEventsData"
 import { useEventSelection } from "../../hooks/useEventSelection"
+import { useSidebarGallery } from "../../hooks/useSidebarGalleryContext"
 import EventGroup from "./EventGroup"
 
 const Events = ({
@@ -14,6 +15,9 @@ const Events = ({
   onHoverChange,
   onProcessed,
 }: EventsProps) => {
+  // Get focused year from context
+  const { focusedYear } = useSidebarGallery()
+
   // Process event groups into renderable data
   const processedEventGroups = useEventProcessing(eventGroups, yearPositions, gapBetweenGroups, onProcessed)
 
@@ -45,6 +49,7 @@ const Events = ({
           selection={selection}
           hovered={hovered}
           selectedYear={selectedYear}
+          focusedYear={focusedYear}
           onEventClick={handleEventClick}
           onHoverChange={onHoverChange}
           setHovered={setHovered}

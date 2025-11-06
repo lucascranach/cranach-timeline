@@ -38,7 +38,8 @@ export const useAtlasGeometry = (
   cropSettings: CropSettings,
   selectedColumnInfo: SelectedColumnInfo | null = null,
   columnsPerYear: number = 3,
-  groupedByYear: Record<string, AtlasImage[]> = {}
+  groupedByYear: Record<string, AtlasImage[]> = {},
+  focusedYear: number | null = null
 ) => {
   return useMemo(() => {
     if (!atlasData || !sortedImages.length) return null
@@ -112,7 +113,7 @@ export const useAtlasGeometry = (
       uvOffsets[i * 4 + 2] = u2
       uvOffsets[i * 4 + 3] = v2
 
-      // Calculate opacity based on selected column
+      // Calculate opacity based on selected column and focused year
       if (selectedColumnInfo) {
         const sortingNumber = imageData.sorting_number || ""
         const year = sortingNumber.split("-")[0]
@@ -131,6 +132,11 @@ export const useAtlasGeometry = (
         } else {
           opacities[i] = 0.2 // Grey out other years
         }
+      } else if (focusedYear !== null) {
+        // When no column is selected but we have a focused year, slightly highlight focused year
+        const sortingNumber = imageData.sorting_number || ""
+        const year = parseInt(sortingNumber.split("-")[0])
+        opacities[i] = year === focusedYear ? 1.0 : 0.5
       } else {
         opacities[i] = 1.0 // Full opacity when nothing is selected
       }
@@ -145,14 +151,12 @@ export const useAtlasGeometry = (
   }, [
     atlasData,
     sortedImages,
-    cropSettings.mode,
-    cropSettings.offsetX,
-    cropSettings.offsetY,
-    cropSettings.scale,
+    cropSettings,
     thumbnailWidth,
     thumbnailHeight,
     selectedColumnInfo,
     columnsPerYear,
     groupedByYear,
+    focusedYear,
   ])
 }

@@ -104,17 +104,5 @@ export const useAtlasTransforms = (
     })
 
     return { positions, scales, yearColumnLabels }
-  }, [
-    atlasData,
-    geometry,
-    sortedImages,
-    yearKeys,
-    groupedByYear,
-    yearPositions,
-    settings.columnsPerYear,
-    settings.preserveAspectRatio,
-    settings.thumbnailWidth,
-    settings.thumbnailHeight,
-    settings.rowSpacing,
-  ])
+  }, [atlasData, geometry, sortedImages, yearKeys, groupedByYear, yearPositions, settings])
 }

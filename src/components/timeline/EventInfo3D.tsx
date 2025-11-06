@@ -1,6 +1,6 @@
 import { Html } from "@react-three/drei"
 import styled from "styled-components"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { FaChevronUp, FaChevronDown } from "react-icons/fa"
 import { ProcessedEvent, ProcessedEventGroup } from "@/types/events"
 import { useRelatedEventsContext } from "@/hooks/useRelatedEventsContext"
@@ -195,17 +195,22 @@ const EventInfo3D = ({ event, groupName, position, onClear, allEventGroups = [] 
   }
 
   // Find related events from the same year but different groups
-  const relatedEvents = allEventGroups
-    .filter((group) => group.name !== groupName) // Exclude current group
-    .flatMap((group) =>
-      group.processedEvents
-        .filter((evt) => evt.startYear === event.startYear)
-        .map((evt) => ({
-          ...evt,
-          groupName: group.name,
-          groupColor: group.color,
-        }))
-    )
+  // Memoize to prevent recalculating on every render
+  const relatedEvents = useMemo(
+    () =>
+      allEventGroups
+        .filter((group) => group.name !== groupName) // Exclude current group
+        .flatMap((group) =>
+          group.processedEvents
+            .filter((evt) => evt.startYear === event.startYear)
+            .map((evt) => ({
+              ...evt,
+              groupName: group.name,
+              groupColor: group.color,
+            }))
+        ),
+    [allEventGroups, groupName, event.startYear]
+  )
 
   // Automatically expand all related events when keepRelatedEventsOpen is enabled
   useEffect(() => {
@@ -213,7 +218,7 @@ const EventInfo3D = ({ event, groupName, position, onClear, allEventGroups = [] 
       const allEventIds = relatedEvents.map((evt, index) => `${evt.groupName}-${index}`)
       setExpandedEvents(new Set(allEventIds))
     }
-  }, [keepRelatedEventsOpen, relatedEvents.length, event.id])
+  }, [keepRelatedEventsOpen, relatedEvents])
 
   // Format the date nicely
   const formatDate = (dateString: string) => {

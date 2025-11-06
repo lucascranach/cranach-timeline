@@ -12,6 +12,7 @@ interface EventPillProps {
   selection: { group: string; instance: number } | null
   hovered: { group: string; instance: number } | null
   selectedYear: number | null
+  focusedYear: number | null
   onEventClick: (processed: any, groupData: ProcessedEventGroup, instanceId: number) => void
   onHoverChange: (payload: { group: string; instance: number } | null) => void
   setHovered: React.Dispatch<React.SetStateAction<{ group: string; instance: number } | null>>
@@ -25,6 +26,7 @@ const EventPill = ({
   selection,
   hovered,
   selectedYear,
+  focusedYear,
   onEventClick,
   onHoverChange,
   setHovered,
@@ -117,7 +119,7 @@ const EventPill = ({
     ref.current.instanceColor!.needsUpdate = true
   }, [count, darkColor])
 
-  // Update colors when selection changes
+  // Update colors when selection or focused year changes
   useLayoutEffect(() => {
     if (!ref.current) return
 
@@ -127,6 +129,7 @@ const EventPill = ({
     for (let i = 0; i < count; i++) {
       const event = group.processedEvents[i]
       const isRelatedEvent = selectedYear !== null && event.startYear === selectedYear && !thisGroupSelected
+      const isInFocusedYear = focusedYear !== null && event.startYear === focusedYear && !thisGroupSelected
 
       if (thisGroupSelected) {
         // This group is selected
@@ -140,13 +143,26 @@ const EventPill = ({
       } else if (isRelatedEvent) {
         // This event is from the same year as the selected event - use yellow
         ref.current.setColorAt(i, selectedColor)
+      } else if (isInFocusedYear) {
+        // This event is in the focused year - use lighter group color for subtle highlight
+        ref.current.setColorAt(i, groupBaseColor)
       } else {
         // This group is not selected - use dark color
         ref.current.setColorAt(i, darkColor)
       }
     }
     ref.current.instanceColor!.needsUpdate = true
-  }, [selection, selectedYear, count, group.name, group.processedEvents, darkColor, groupBaseColor, selectedColor])
+  }, [
+    selection,
+    selectedYear,
+    focusedYear,
+    count,
+    group.name,
+    group.processedEvents,
+    darkColor,
+    groupBaseColor,
+    selectedColor,
+  ])
 
   return (
     <instancedMesh

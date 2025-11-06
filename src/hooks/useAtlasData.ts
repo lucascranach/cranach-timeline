@@ -24,10 +24,11 @@ export const useAtlasData = (
       .catch((err) => console.error("Failed to load atlas data:", err))
   }, [])
 
-  // Sort and group images by year from sorting_number
-  const { sortedImages, groupedByYear, yearKeys, yearPositions } = useMemo(() => {
+  // Sort and group images by year from sorting_number - memoized separately
+  // to avoid recreating groupedByYear when zoom/spacing changes
+  const { sortedImages, groupedByYear, yearKeys } = useMemo(() => {
     if (!atlasData?.images) {
-      return { sortedImages: [], groupedByYear: {}, yearKeys: [], yearPositions: {} }
+      return { sortedImages: [], groupedByYear: {}, yearKeys: [] }
     }
 
     // Sort images by sorting_number
@@ -42,9 +43,19 @@ export const useAtlasData = (
     // Uniform year list from START_YEAR..END_YEAR (even if no images)
     const keys = Array.from({ length: END_YEAR - START_YEAR + 1 }, (_, i) => String(START_YEAR + i))
 
+    return {
+      sortedImages: sorted,
+      groupedByYear: grouped,
+      yearKeys: keys,
+    }
+  }, [atlasData])
+
+  // Calculate year positions separately - this can change with zoom/spacing
+  // without recreating sortedImages/groupedByYear
+  const yearPositions = useMemo(() => {
     // Center positions so REFERENCE_YEAR maps to x = 0
     // When zooming, scale positions relative to the zoom origin (screen center)
-    const positions = keys.reduce((acc, year) => {
+    return yearKeys.reduce((acc, year) => {
       const yrNum = parseInt(year, 10)
       const basePosition = (yrNum - REFERENCE_YEAR) * yearSpacing
 
@@ -63,14 +74,7 @@ export const useAtlasData = (
 
       return acc
     }, {} as Record<string, number>)
-
-    return {
-      sortedImages: sorted,
-      groupedByYear: grouped,
-      yearKeys: keys,
-      yearPositions: positions,
-    }
-  }, [atlasData, yearSpacing, zoomOriginX, zoomProgress, zoomMultiplier])
+  }, [yearKeys, yearSpacing, zoomOriginX, zoomProgress, zoomMultiplier])
 
   return {
     atlasData,

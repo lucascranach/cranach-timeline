@@ -13,12 +13,13 @@ import { useKeyboardNavigation } from "@/hooks/useKeyboardNavigation"
 import { useEventAutoSelection } from "@/hooks/useEventAutoSelection"
 import { useEvents } from "@/hooks/useEvents"
 import { useSidebarGallery } from "@/hooks/useSidebarGalleryContext"
+import { useFocusedYear } from "@/hooks/useFocusedYear"
 import YearLabels from "./YearLabels"
 import ThumbnailMesh from "./ThumbnailMesh"
 import FallbackUI from "./FallbackUI"
 import DecadeBackgrounds from "./DecadeBackgrounds"
 import Events from "@/components/events/Events"
-import EventInfo3D from "./EventInfo3D"
+import FocusedYearBeam from "./FocusedYearBeam"
 import { ProcessedEventGroup } from "@/types/events"
 import { AtlasImage, SelectionState } from "@/types/atlas"
 import { EVENT_FILE_CONFIGS } from "@/constants/eventConfigs"
@@ -32,8 +33,8 @@ const Atlas = () => {
   // Controls and context
   const controls = useAtlasControls()
   const { targetZoom } = useZoomContext()
-  const { setSelectedEvent, selectedEvent, selectedGroupName, selectedEventPosition } = useSelectedEvent()
-  const { setColumnData } = useSidebarGallery()
+  const { setSelectedEvent, selectedEvent, selectedGroupName } = useSelectedEvent()
+  const { setColumnData, setEventData, setSidebarMode, focusedYear } = useSidebarGallery()
 
   const {
     thumbnailWidth,
@@ -114,22 +115,35 @@ const Atlas = () => {
     onSelectionChange: setSelection,
   })
 
+  // Track focused year for sidebar
+  useFocusedYear({
+    yearPositions,
+    groupedByYear,
+    allEventGroups: processedGroupsRef.current,
+  })
+
   // Update selected event context when selection changes
   useEffect(() => {
     if (!selection) {
       setSelectedEvent(null, null, null)
+      setEventData(null)
+      setSidebarMode(null)
       return
     }
 
     const group = processedGroupsRef.current[selection.groupIndex]
     if (!group) {
       setSelectedEvent(null, null, null)
+      setEventData(null)
+      setSidebarMode(null)
       return
     }
 
     const event = group.processedEvents[selection.eventIndex]
     if (!event) {
       setSelectedEvent(null, null, null)
+      setEventData(null)
+      setSidebarMode(null)
       return
     }
 
@@ -139,7 +153,15 @@ const Atlas = () => {
     const position: [number, number, number] = [event.startPos, eventY, 0]
 
     setSelectedEvent(event, group.name, position)
-  }, [selection, setSelectedEvent, thumbnailHeight])
+
+    // Set event data in sidebar
+    setEventData({
+      event,
+      groupName: group.name,
+      allEventGroups: processedGroupsRef.current,
+    })
+    setSidebarMode("event")
+  }, [selection, setSelectedEvent, thumbnailHeight, setEventData, setSidebarMode])
 
   // Auto-center on selection changes
   useEffect(() => {
@@ -189,6 +211,7 @@ const Atlas = () => {
       if (selectedColumnInfo && selectedColumnInfo.year === year && selectedColumnInfo.column === column) {
         setSelectedColumnInfo(null)
         setColumnData(null)
+        setSidebarMode(null)
         console.log("Deselected column")
         return
       }
@@ -210,6 +233,7 @@ const Atlas = () => {
         column,
         images: uniqueColumnImages,
       })
+      setSidebarMode("column")
 
       console.log(
         `Column ${column} in year ${year}:`,
@@ -221,20 +245,38 @@ const Atlas = () => {
         )
       }
     },
-    [atlasData, groupedByYear, columnsPerYear, setColumnData, selectedColumnInfo]
+    [atlasData, groupedByYear, columnsPerYear, setColumnData, selectedColumnInfo, setSidebarMode]
+  )
+
+  // Memoize crop settings to prevent unnecessary re-renders
+  const cropSettings = useMemo(
+    () => ({
+      mode: cropMode,
+      offsetX: cropOffsetX,
+      offsetY: cropOffsetY,
+      scale: cropScale,
+    }),
+    [cropMode, cropOffsetX, cropOffsetY, cropScale]
+  )
+
+  // Memoize transform settings to prevent unnecessary re-renders
+  const transformSettings = useMemo(
+    () => ({
+      columnsPerYear,
+      preserveAspectRatio,
+      thumbnailWidth: effectiveThumbnailWidth,
+      thumbnailHeight: effectiveThumbnailHeight,
+      rowSpacing,
+    }),
+    [columnsPerYear, preserveAspectRatio, effectiveThumbnailWidth, effectiveThumbnailHeight, rowSpacing]
   )
 
   // Create atlas material
   const atlasMaterial = useMemo(() => {
     if (!atlasTexture || !atlasData) return null
 
-    return AtlasShaderMaterialTSL(atlasTexture, {
-      mode: cropMode,
-      offsetX: cropOffsetX,
-      offsetY: cropOffsetY,
-      scale: cropScale,
-    })
-  }, [atlasTexture, atlasData, cropMode, cropOffsetX, cropOffsetY, cropScale])
+    return AtlasShaderMaterialTSL(atlasTexture, cropSettings)
+  }, [atlasTexture, atlasData, cropSettings])
 
   // Geometry with attributes (uses base dimensions to prevent recreation during zoom)
   const geometryWithAttributes = useAtlasGeometry(
@@ -242,15 +284,11 @@ const Atlas = () => {
     sortedImages,
     thumbnailWidth,
     thumbnailHeight,
-    {
-      mode: cropMode,
-      offsetX: cropOffsetX,
-      offsetY: cropOffsetY,
-      scale: cropScale,
-    },
+    cropSettings,
     selectedColumnInfo,
     columnsPerYear,
-    groupedByYear
+    groupedByYear,
+    focusedYear
   )
 
   // Instance transforms (uses effective dimensions for proper layout during zoom)
@@ -261,13 +299,7 @@ const Atlas = () => {
     groupedByYear,
     yearPositions,
     geometryWithAttributes,
-    {
-      columnsPerYear,
-      preserveAspectRatio,
-      thumbnailWidth: effectiveThumbnailWidth,
-      thumbnailHeight: effectiveThumbnailHeight,
-      rowSpacing,
-    }
+    transformSettings
   )
 
   // Show fallback while loading
@@ -279,6 +311,9 @@ const Atlas = () => {
 
   return (
     <>
+      {/* Focused year beam indicator */}
+      <FocusedYearBeam yearPositions={yearPositions} />
+
       {/* Background decade stripes */}
       <DecadeBackgrounds
         yearKeys={yearKeys}
@@ -331,17 +366,6 @@ const Atlas = () => {
               processedGroupsRef.current = groups
             }}
           />
-
-          {/* Event info panel */}
-          {selectedEvent && selectedGroupName && selectedEventPosition && (
-            <EventInfo3D
-              event={selectedEvent}
-              groupName={selectedGroupName}
-              position={selectedEventPosition}
-              onClear={handleClearSelection}
-              allEventGroups={processedGroupsRef.current}
-            />
-          )}
         </group>
       </group>
     </>

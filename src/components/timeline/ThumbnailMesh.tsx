@@ -37,7 +37,7 @@ const ThumbnailMesh = ({
     return mesh
   }, []) // Empty deps - create only once
 
-  console.log("ThumbnailMesh render, instanceCount:", instanceCount, "positions.length:", positions.length)
+  // console.log("ThumbnailMesh render, instanceCount:", instanceCount, "positions.length:", positions.length)
 
   // Track mount/unmount
   useEffect(() => {
