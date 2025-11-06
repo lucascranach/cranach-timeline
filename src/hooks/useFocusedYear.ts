@@ -79,9 +79,9 @@ export const useFocusedYear = ({ yearPositions, groupedByYear, allEventGroups }:
     }
   })
 
-  // Initialize with a default year on mount and prepare all year slides
+  // Prepare all year slides whenever data changes
   useEffect(() => {
-    if (sidebarMode === null && yearPositions && Object.keys(yearPositions).length > 0) {
+    if (yearPositions && Object.keys(yearPositions).length > 0 && allEventGroups.length > 0) {
       // Prepare all year slides
       const allYears = Object.keys(yearPositions).sort()
       const slides = allYears.map((yearStr) => {
@@ -103,7 +103,12 @@ export const useFocusedYear = ({ yearPositions, groupedByYear, allEventGroups }:
       })
 
       setAllYearSlides(slides)
+    }
+  }, [yearPositions, allEventGroups, groupedByYear, setAllYearSlides])
 
+  // Initialize with a default year on mount
+  useEffect(() => {
+    if (sidebarMode === null && yearPositions && Object.keys(yearPositions).length > 0) {
       // Set initial focused year
       const cameraX = camera.position.x
       let closestYear: string | null = null
