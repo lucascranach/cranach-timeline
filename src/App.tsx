@@ -56,7 +56,7 @@ const AppContent = () => {
 
   return (
     <>
-      <SidebarTriggerButton />
+      {/* <SidebarTriggerButton /> */}
       <ZoomToggle isEnabled={enableZoomStep} onToggle={setEnableZoomStep} />
       <RelatedEventsToggle isEnabled={keepRelatedEventsOpen} onToggle={setKeepRelatedEventsOpen} />
       <ImagePrefetchIndicator />

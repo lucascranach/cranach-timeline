@@ -79,14 +79,7 @@ export function AppSidebar() {
 
   const renderYearContent = (year: number, events: any[], images: any[]) => {
     return (
-      <div
-        ref={(el) => {
-          if (el) {
-            scrollContainerRefs.current.set(year, el)
-          }
-        }}
-        className="min-w-full h-full overflow-y-auto px-6 py-4 space-y-6 scroll-smooth"
-      >
+      <>
         {/* All Events for this year */}
         {events.length > 0 ? (
           <div className="space-y-4 animate-in fade-in duration-300">
@@ -183,7 +176,7 @@ export function AppSidebar() {
             </div>
           </>
         )}
-      </div>
+      </>
     )
   }
 
@@ -196,13 +189,13 @@ export function AppSidebar() {
               {focusedYearData ? focusedYearData.year : "Timeline"}
             </h2>
           </div>
-          {focusedYearData && <p className="text-center text-xs text-white/40 mt-2 font-light">Year in focus</p>}
+          {/* {focusedYearData && <p className="text-center text-xs text-white/40 mt-2 font-light">Year in focus</p>} */}
         </div>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
           {allYearSlides.length > 0 && focusedYearData ? (
-            <div className="relative overflow-hidden h-full">
+            <div className="relative h-full overflow-hidden">
               <div
                 className="flex h-full transition-transform duration-500 ease-out will-change-transform"
                 style={{
@@ -219,13 +212,22 @@ export function AppSidebar() {
                   return (
                     <div
                       key={slide.year}
-                      className="shrink-0 w-full h-full transition-opacity duration-300"
+                      className="shrink-0 w-full h-full transition-opacity duration-300 flex flex-col"
                       style={{
                         marginLeft: idx === 0 ? `${visibleSlides.startIndex * 100}%` : "0",
                         opacity: distance > 1 ? 0.3 : 1,
                       }}
                     >
-                      {renderYearContent(slide.year, slide.events, slide.images)}
+                      <div
+                        ref={(el) => {
+                          if (el) {
+                            scrollContainerRefs.current.set(slide.year, el)
+                          }
+                        }}
+                        className="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth px-6 py-4 min-h-0"
+                      >
+                        <div className="space-y-6">{renderYearContent(slide.year, slide.events, slide.images)}</div>
+                      </div>
                     </div>
                   )
                 })}
