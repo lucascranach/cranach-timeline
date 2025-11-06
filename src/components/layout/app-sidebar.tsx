@@ -12,12 +12,15 @@ export function AppSidebar() {
     setLoadedImages((prev) => new Set(prev).add(identifier))
   }
 
-  // Reset scroll position to top when focused year changes
+  // Reset scroll position to top when focused year changes with smooth animation
   useEffect(() => {
     if (focusedYearData) {
       const container = scrollContainerRefs.current.get(focusedYearData.year)
       if (container) {
-        container.scrollTop = 0
+        container.scrollTo({
+          top: 0,
+          behavior: "smooth",
+        })
       }
     }
   }, [focusedYearData?.year])
@@ -70,24 +73,31 @@ export function AppSidebar() {
             scrollContainerRefs.current.set(year, el)
           }
         }}
-        className="min-w-full h-full overflow-y-auto px-4 py-2 space-y-4"
+        className="min-w-full h-full overflow-y-auto px-6 py-4 space-y-6 scroll-smooth"
       >
         {/* All Events for this year */}
-        {events.length > 0 && (
-          <div className="space-y-3">
-            <div className="text-xs font-semibold text-white/70 uppercase tracking-wide">
+        {events.length > 0 ? (
+          <div className="space-y-4 animate-in fade-in duration-300">
+            <div className="text-xs font-semibold text-white/50 uppercase tracking-wider">
               Events ({events.reduce((sum, g) => sum + g.processedEvents.length, 0)})
             </div>
             {events.map((eventGroup) => (
-              <div key={eventGroup.name} className="space-y-2">
-                <div className="text-xs font-semibold text-primary uppercase tracking-wide">{eventGroup.name}</div>
+              <div key={eventGroup.name} className="space-y-3">
+                <div className="text-xs font-bold uppercase tracking-wider" style={{ color: "rgb(250, 204, 21)" }}>
+                  {eventGroup.name}
+                </div>
                 {eventGroup.processedEvents.map((event: any, index: number) => {
                   const eventId = `${eventGroup.name}-${index}-${year}`
                   return (
-                    <div key={eventId} className="border border-white/20 rounded-md p-3 bg-white/5">
-                      <div className="text-sm font-medium text-white mb-2">{formatDate(event.event.startDate)}</div>
+                    <div
+                      key={eventId}
+                      className="border-l-2 border-white/10 pl-4 py-1 transition-all duration-200 hover:border-primary/60"
+                    >
+                      <div className="text-xs font-medium text-white/60 mb-1.5">
+                        {formatDate(event.event.startDate)}
+                      </div>
                       <div
-                        className="text-sm leading-relaxed text-white/90 [&_p]:text-white/90 [&_strong]:text-white [&_em]:text-white/90 [&_a]:text-primary [&_a]:underline"
+                        className="text-sm leading-relaxed text-white/85 [&_p]:text-white/85 [&_strong]:text-white [&_em]:text-white/80 [&_a]:text-primary [&_a]:underline"
                         dangerouslySetInnerHTML={{ __html: event.event.description }}
                       />
                     </div>
@@ -96,17 +106,21 @@ export function AppSidebar() {
               </div>
             ))}
           </div>
+        ) : (
+          <div className="px-2 py-8 text-center">
+            <p className="text-sm text-white/40">No events recorded for this year</p>
+          </div>
         )}
 
         {/* Thumbnails for this year */}
-        {images.length > 0 && (
+        {images.length > 0 ? (
           <>
-            {events.length > 0 && <Separator className="my-4" />}
-            <div className="space-y-3">
-              <div className="text-xs font-semibold text-white/70 uppercase tracking-wide">
+            {events.length > 0 && <Separator className="my-6 opacity-30" />}
+            <div className="space-y-4 animate-in fade-in duration-300">
+              <div className="text-xs font-semibold text-white/50 uppercase tracking-wider">
                 Artworks ({images.length})
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-3">
                 {images.map((image: any, idx: number) => {
                   const identifier = `${image.sorting_number || idx}-${year}`
                   const isLoaded = loadedImages.has(identifier)
@@ -115,13 +129,13 @@ export function AppSidebar() {
                   return (
                     <div
                       key={identifier}
-                      className="relative bg-secondary rounded-lg overflow-hidden border border-white/20 cursor-pointer hover:border-primary transition-colors"
+                      className="relative overflow-hidden border border-white/8 cursor-pointer hover:border-primary/40 transition-all duration-300 hover:scale-[1.03] group"
                       onClick={() => url && window.open(url, "_blank")}
                     >
-                      <div className="relative aspect-3/4">
+                      <div className="relative aspect-3/4 bg-black/20">
                         {!isLoaded && (
                           <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="animate-pulse bg-muted w-full h-full" />
+                            <div className="animate-pulse bg-white/5 w-full h-full" />
                           </div>
                         )}
                         {image.original_url ? (
@@ -129,7 +143,7 @@ export function AppSidebar() {
                             src={image.original_url}
                             alt={inventoryNumber || image.filename}
                             loading="lazy"
-                            className={`w-full h-full object-contain transition-opacity duration-300 ${
+                            className={`w-full h-full object-contain transition-all duration-500 group-hover:scale-105 ${
                               isLoaded ? "opacity-100" : "opacity-0"
                             }`}
                             onLoad={() => handleImageLoad(identifier)}
@@ -143,20 +157,19 @@ export function AppSidebar() {
                           </div>
                         )}
                       </div>
-                      <div className="bg-black/75 px-2 py-1.5">
-                        <p className="text-xs font-mono text-white truncate">{inventoryNumber}</p>
-                      </div>
                     </div>
                   )
                 })}
               </div>
             </div>
           </>
-        )}
-
-        {/* Empty state */}
-        {events.length === 0 && images.length === 0 && (
-          <div className="text-center py-8 text-white/50">No events or artworks for this year</div>
+        ) : (
+          <>
+            {events.length > 0 && <Separator className="my-6 opacity-30" />}
+            <div className="px-2 py-8 text-center">
+              <p className="text-sm text-white/40">No artworks available for this year</p>
+            </div>
+          </>
         )}
       </div>
     )
@@ -165,11 +178,13 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader>
-        <div className="px-4 py-3 bg-primary/20 border-b border-primary/40">
+        <div className="px-6 py-5 border-b border-white/5">
           <div className="flex items-center justify-center">
-            <h2 className="text-2xl font-bold text-white">{focusedYearData ? focusedYearData.year : "Timeline"}</h2>
+            <h2 className="text-3xl font-light tracking-tight text-white">
+              {focusedYearData ? focusedYearData.year : "Timeline"}
+            </h2>
           </div>
-          {focusedYearData && <p className="text-center text-xs text-white/70 mt-1">Currently viewing this year</p>}
+          {focusedYearData && <p className="text-center text-xs text-white/40 mt-2 font-light">Year in focus</p>}
         </div>
       </SidebarHeader>
       <SidebarContent>
@@ -177,7 +192,7 @@ export function AppSidebar() {
           {allYearSlides.length > 0 && focusedYearData ? (
             <div className="relative overflow-hidden h-full">
               <div
-                className="flex h-full transition-transform duration-500 ease-out will-change-transform"
+                className="flex h-full transition-transform duration-700 ease-in-out will-change-transform"
                 style={{
                   transform: `translateX(-${allYearSlides.findIndex((s) => s.year === focusedYearData.year) * 100}%)`,
                 }}
@@ -196,7 +211,9 @@ export function AppSidebar() {
               </div>
             </div>
           ) : (
-            <div className="px-4 py-8 text-center text-white/50">Scroll through the timeline to see details</div>
+            <div className="px-6 py-12 text-center text-white/40 font-light">
+              Scroll through the timeline to see details
+            </div>
           )}
         </SidebarGroup>
       </SidebarContent>
