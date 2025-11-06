@@ -1,15 +1,26 @@
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarHeader } from "@/components/ui/sidebar"
 import { useSidebarGallery } from "@/hooks/useSidebarGalleryContext"
 import { Separator } from "@/components/ui/separator"
-import { useState, useMemo, useCallback } from "react"
+import { useState, useMemo, useCallback, useRef, useEffect } from "react"
 
 export function AppSidebar() {
   const { focusedYearData, allYearSlides } = useSidebarGallery()
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set())
+  const scrollContainerRefs = useRef<Map<number, HTMLDivElement>>(new Map())
 
   const handleImageLoad = (identifier: string) => {
     setLoadedImages((prev) => new Set(prev).add(identifier))
   }
+
+  // Reset scroll position to top when focused year changes
+  useEffect(() => {
+    if (focusedYearData) {
+      const container = scrollContainerRefs.current.get(focusedYearData.year)
+      if (container) {
+        container.scrollTop = 0
+      }
+    }
+  }, [focusedYearData?.year])
 
   // Format date nicely - memoized
   const formatDate = useCallback((dateString: string) => {
@@ -53,7 +64,14 @@ export function AppSidebar() {
 
   const renderYearContent = (year: number, events: any[], images: any[]) => {
     return (
-      <div className="min-w-full h-full px-4 py-2 space-y-4">
+      <div
+        ref={(el) => {
+          if (el) {
+            scrollContainerRefs.current.set(year, el)
+          }
+        }}
+        className="min-w-full h-full overflow-y-auto px-4 py-2 space-y-4"
+      >
         {/* All Events for this year */}
         {events.length > 0 && (
           <div className="space-y-3">
