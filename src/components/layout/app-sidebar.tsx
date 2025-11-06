@@ -7,10 +7,21 @@ export function AppSidebar() {
   const { focusedYearData, allYearSlides } = useSidebarGallery()
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set())
   const scrollContainerRefs = useRef<Map<number, HTMLDivElement>>(new Map())
+  const [prevFocusedYear, setPrevFocusedYear] = useState<number | null>(null)
 
   const handleImageLoad = (identifier: string) => {
     setLoadedImages((prev) => new Set(prev).add(identifier))
   }
+
+  // Track year changes with delay for smoother transitions
+  useEffect(() => {
+    if (focusedYearData?.year !== prevFocusedYear) {
+      const timer = setTimeout(() => {
+        setPrevFocusedYear(focusedYearData?.year ?? null)
+      }, 100)
+      return () => clearTimeout(timer)
+    }
+  }, [focusedYearData?.year, prevFocusedYear])
 
   // Reset scroll position to top when focused year changes with smooth animation
   useEffect(() => {
@@ -39,11 +50,11 @@ export function AppSidebar() {
     }
   }, [])
 
-  // Only render current year and adjacent years (±1) for performance
+  // Keep more adjacent years loaded (±2) to prevent laggy disappearing effect
   const visibleSlides = useMemo(() => {
     if (!focusedYearData || allYearSlides.length === 0) {
       return {
-        slides: allYearSlides.slice(0, 3),
+        slides: allYearSlides.slice(0, 5),
         startIndex: 0,
       }
     }
@@ -51,13 +62,14 @@ export function AppSidebar() {
     const currentIndex = allYearSlides.findIndex((slide) => slide.year === focusedYearData.year)
     if (currentIndex === -1) {
       return {
-        slides: allYearSlides.slice(0, 3),
+        slides: allYearSlides.slice(0, 5),
         startIndex: 0,
       }
     }
 
-    const start = Math.max(0, currentIndex - 1)
-    const end = Math.min(allYearSlides.length, currentIndex + 2)
+    // Keep 2 years before and 2 years after for smoother scrolling
+    const start = Math.max(0, currentIndex - 2)
+    const end = Math.min(allYearSlides.length, currentIndex + 3)
 
     return {
       slides: allYearSlides.slice(start, end),
@@ -192,22 +204,31 @@ export function AppSidebar() {
           {allYearSlides.length > 0 && focusedYearData ? (
             <div className="relative overflow-hidden h-full">
               <div
-                className="flex h-full transition-transform duration-700 ease-in-out will-change-transform"
+                className="flex h-full transition-transform duration-500 ease-out will-change-transform"
                 style={{
                   transform: `translateX(-${allYearSlides.findIndex((s) => s.year === focusedYearData.year) * 100}%)`,
                 }}
               >
-                {visibleSlides.slides.map((slide, idx) => (
-                  <div
-                    key={slide.year}
-                    className="shrink-0 w-full h-full"
-                    style={{
-                      marginLeft: idx === 0 ? `${visibleSlides.startIndex * 100}%` : "0",
-                    }}
-                  >
-                    {renderYearContent(slide.year, slide.events, slide.images)}
-                  </div>
-                ))}
+                {visibleSlides.slides.map((slide, idx) => {
+                  const isActive = slide.year === focusedYearData.year
+                  const distance = Math.abs(
+                    allYearSlides.findIndex((s) => s.year === slide.year) -
+                      allYearSlides.findIndex((s) => s.year === focusedYearData.year)
+                  )
+
+                  return (
+                    <div
+                      key={slide.year}
+                      className="shrink-0 w-full h-full transition-opacity duration-300"
+                      style={{
+                        marginLeft: idx === 0 ? `${visibleSlides.startIndex * 100}%` : "0",
+                        opacity: distance > 1 ? 0.3 : 1,
+                      }}
+                    >
+                      {renderYearContent(slide.year, slide.events, slide.images)}
+                    </div>
+                  )
+                })}
               </div>
             </div>
           ) : (
