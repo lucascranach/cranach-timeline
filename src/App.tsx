@@ -58,7 +58,7 @@ const AppContent = () => {
     <>
       {/* <SidebarTriggerButton /> */}
       <ZoomToggle isEnabled={enableZoomStep} onToggle={setEnableZoomStep} />
-      <RelatedEventsToggle isEnabled={keepRelatedEventsOpen} onToggle={setKeepRelatedEventsOpen} />
+      {/* <RelatedEventsToggle isEnabled={keepRelatedEventsOpen} onToggle={setKeepRelatedEventsOpen} /> */}
       <ImagePrefetchIndicator />
       <Leva collapsed hidden />
 
@@ -74,9 +74,11 @@ function App() {
         <SelectedEventProvider>
           <RelatedEventsProvider>
             <SidebarGalleryProvider>
-              <SidebarProvider>
-                <AppSidebar />
-                <AppContent />
+              <SidebarProvider defaultOpen={true}>
+                <div style={{ width: "100%", height: "100vh", position: "relative" }}>
+                  <AppContent />
+                  <AppSidebar />
+                </div>
               </SidebarProvider>
             </SidebarGalleryProvider>
           </RelatedEventsProvider>

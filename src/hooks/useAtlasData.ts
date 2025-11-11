@@ -14,7 +14,7 @@ export const useAtlasData = (
   const START_YEAR = 1400
   const END_YEAR = 1950
   // Year that should appear at x = 0
-  const REFERENCE_YEAR = 1500
+  const REFERENCE_YEAR = 1507
 
   // Load atlas data
   useEffect(() => {

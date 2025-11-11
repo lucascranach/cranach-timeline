@@ -30,6 +30,16 @@ const TimelineControls = () => {
     // Adjustable scroll speed (world units per wheel delta unit)
     const SCROLL_SPEED = 0.04
 
+    // Timeline boundaries - years 1472 to 1950
+    // Assuming REFERENCE_YEAR = 1500 at x = 0, and typical yearSpacing ~= 2
+    // We'll use approximate bounds and clamp camera position
+    const MIN_YEAR = 1472
+    const MAX_YEAR = 1950
+    const REFERENCE_YEAR = 1507
+    const YEAR_SPACING = 2 // approximate, adjust if needed
+    const MIN_X = (MIN_YEAR - REFERENCE_YEAR) * YEAR_SPACING
+    const MAX_X = (MAX_YEAR - REFERENCE_YEAR) * YEAR_SPACING
+
     const handleWheel = (event: WheelEvent) => {
       // Allow cmd/ctrl + scroll for browser shortcuts, otherwise hijack
       if (event.metaKey || event.ctrlKey) return
@@ -40,8 +50,12 @@ const TimelineControls = () => {
       const raw = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY
       const deltaX = raw * SCROLL_SPEED
 
-      camera.position.x += deltaX
-      controls.target.x += deltaX
+      // Calculate new position and clamp to boundaries
+      let newX = camera.position.x + deltaX
+      newX = Math.max(MIN_X, Math.min(MAX_X, newX))
+
+      camera.position.x = newX
+      controls.target.x = newX
 
       // Lock Y axes
       camera.position.y = initialY
@@ -93,6 +107,28 @@ const TimelineControls = () => {
       if (animId) cancelAnimationFrame(animId)
     }
   }, [gl, camera])
+
+  // Clamp camera position on every frame (for panning with mouse drag)
+  useFrame(() => {
+    const controls = controlsRef.current
+    if (!controls) return
+
+    const MIN_YEAR = 1472
+    const MAX_YEAR = 1950
+    const REFERENCE_YEAR = 1500
+    const YEAR_SPACING = 2
+    const MIN_X = (MIN_YEAR - REFERENCE_YEAR) * YEAR_SPACING
+    const MAX_X = (MAX_YEAR - REFERENCE_YEAR) * YEAR_SPACING
+
+    // Clamp camera X position
+    if (camera.position.x < MIN_X) {
+      camera.position.x = MIN_X
+      controls.target.x = MIN_X
+    } else if (camera.position.x > MAX_X) {
+      camera.position.x = MAX_X
+      controls.target.x = MAX_X
+    }
+  })
 
   return (
     <MapControls

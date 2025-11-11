@@ -131,37 +131,40 @@ export function AppSidebar() {
                   const isLoaded = loadedImages.has(identifier)
                   const inventoryNumber = image["inventory_number\t"]?.trim() || image.sorting_number
                   const url = inventoryNumber ? `https://lucascranach.org/en/${inventoryNumber}` : null
+                  const title = image.title || inventoryNumber || "Untitled"
                   return (
-                    <div
-                      key={identifier}
-                      className="relative overflow-hidden border border-white/8 cursor-pointer hover:border-primary/40 transition-all duration-300 hover:scale-[1.03] group"
-                      onClick={() => url && window.open(url, "_blank")}
-                    >
-                      <div className="relative aspect-3/4 bg-black/20">
-                        {!isLoaded && (
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="animate-pulse bg-white/5 w-full h-full" />
-                          </div>
-                        )}
-                        {image.original_url ? (
-                          <img
-                            src={image.original_url}
-                            alt={inventoryNumber || image.filename}
-                            loading="lazy"
-                            className={`w-full h-full object-contain transition-all duration-500 group-hover:scale-105 ${
-                              isLoaded ? "opacity-100" : "opacity-0"
-                            }`}
-                            onLoad={() => handleImageLoad(identifier)}
-                            onError={(e) => {
-                              e.currentTarget.style.display = "none"
-                            }}
-                          />
-                        ) : (
-                          <div className="flex items-center justify-center h-full text-xs text-muted-foreground">
-                            No image available
-                          </div>
-                        )}
+                    <div key={identifier} className="space-y-2">
+                      <div
+                        className="relative overflow-hidden border border-white/8 cursor-pointer hover:border-primary/40 transition-all duration-300 hover:scale-[1.03] group"
+                        onClick={() => url && window.open(url, "_blank")}
+                      >
+                        <div className="relative aspect-3/4 bg-black/20">
+                          {!isLoaded && (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="animate-pulse bg-white/5 w-full h-full" />
+                            </div>
+                          )}
+                          {image.original_url ? (
+                            <img
+                              src={image.original_url}
+                              alt={title}
+                              loading="lazy"
+                              className={`w-full h-full object-contain transition-all duration-500 group-hover:scale-105 ${
+                                isLoaded ? "opacity-100" : "opacity-0"
+                              }`}
+                              onLoad={() => handleImageLoad(identifier)}
+                              onError={(e) => {
+                                e.currentTarget.style.display = "none"
+                              }}
+                            />
+                          ) : (
+                            <div className="flex items-center justify-center h-full text-xs text-muted-foreground">
+                              No image available
+                            </div>
+                          )}
+                        </div>
                       </div>
+                      <div className="text-xs text-white/70 leading-tight line-clamp-2">{title}</div>
                     </div>
                   )
                 })}
@@ -181,10 +184,10 @@ export function AppSidebar() {
   }
 
   return (
-    <Sidebar>
+    <Sidebar side="right">
       <SidebarHeader>
         <div className="px-6 py-5 border-b border-white/5">
-          <div className="flex items-center justify-center">
+          <div className="flex items-center justify-start">
             <h2 className="text-3xl font-light tracking-tight text-white">
               {focusedYearData ? focusedYearData.year : "Timeline"}
             </h2>
