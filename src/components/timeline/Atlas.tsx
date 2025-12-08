@@ -23,13 +23,16 @@ import Events from "@/components/events/Events"
 import FocusedYearBeam from "./FocusedYearBeam"
 import { ProcessedEventGroup } from "@/types/events"
 import { AtlasImage, SelectionState } from "@/types/atlas"
-import { EVENT_FILE_CONFIGS } from "@/constants/eventConfigs"
+import { getEventFileConfigs } from "@/constants/eventConfigs"
+import { getCurrentLanguage } from "@/utils/languageUtils"
+
+import { path } from "@/store/base"
 
 /**
  * Main Atlas component - renders the timeline with thumbnails, events, and backgrounds
  */
 const Atlas = () => {
-  const atlasTexture = useLoader(THREE.TextureLoader, "/timeline/atlas/texture_atlas.webp")
+  const atlasTexture = useLoader(THREE.TextureLoader, `${path}/atlas/texture_atlas.webp`)
 
   // Controls and context
   const controls = useAtlasControls()
@@ -88,7 +91,9 @@ const Atlas = () => {
     zoomMultiplier
   )
 
-  const { eventGroups } = useEvents(EVENT_FILE_CONFIGS)
+  const currentLanguage = getCurrentLanguage()
+  const eventFileConfigs = useMemo(() => getEventFileConfigs(currentLanguage), [currentLanguage])
+  const { eventGroups } = useEvents(eventFileConfigs)
 
   // Prefetch all images in the background
   const prefetchProgress = useImagePrefetch(sortedImages)

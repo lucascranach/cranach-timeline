@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo } from "react"
 import { groupResultsByYear } from "@/utils/atlasUtils"
 import { AtlasData, AtlasImage } from "@/types/atlas"
 
+import { path } from "@/store/base"
+
 export const useAtlasData = (
   yearSpacing: number,
   zoomOriginX: number | null = null,
@@ -18,7 +20,7 @@ export const useAtlasData = (
 
   // Load atlas data
   useEffect(() => {
-    fetch("/timeline/atlas/texture_atlas.json")
+    fetch(`${path}/atlas/texture_atlas.json`)
       .then((response) => response.json())
       .then((data) => setAtlasData(data))
       .catch((err) => console.error("Failed to load atlas data:", err))

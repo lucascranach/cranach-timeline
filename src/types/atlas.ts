@@ -1,3 +1,5 @@
+import { LocalizedString } from "@/utils/languageUtils"
+
 export interface AtlasImage {
   filename: string
   x: number
@@ -8,7 +10,7 @@ export interface AtlasImage {
   original_url?: string
   "inventory_number\t"?: string
   entity_type?: string
-  title?: string
+  title?: string | LocalizedString
 }
 
 export interface AtlasData {

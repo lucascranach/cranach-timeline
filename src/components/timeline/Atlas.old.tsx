@@ -20,7 +20,8 @@ import Events from "@/components/events/Events"
 import EventInfo3D from "./EventInfo3D"
 import { ProcessedEventGroup } from "@/types/events"
 import { AtlasImage, SelectionState } from "@/types/atlas"
-import { EVENT_FILE_CONFIGS } from "@/constants/eventConfigs"
+import { getEventFileConfigs } from "@/constants/eventConfigs"
+import { getCurrentLanguage } from "@/utils/languageUtils"
 
 const Atlas = () => {
   const atlasTexture = useLoader(THREE.TextureLoader, "/timeline/atlas/texture_atlas.webp")
@@ -88,7 +89,9 @@ const Atlas = () => {
   )
 
   // Load events data
-  const { eventGroups } = useEvents(EVENT_FILE_CONFIGS)
+  const currentLanguage = getCurrentLanguage()
+  const eventFileConfigs = useMemo(() => getEventFileConfigs(currentLanguage), [currentLanguage])
+  const { eventGroups } = useEvents(eventFileConfigs)
 
   // Selection state
   const [selection, setSelection] = useState<SelectionState | null>(null)

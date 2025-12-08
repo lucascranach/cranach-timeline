@@ -4,7 +4,7 @@ import { getLocalizedValue } from "@/utils/languageUtils"
 // Cache language detection
 const CURRENT_LANGUAGE = (() => {
   const path = window.location.pathname
-  const match = path.match(/\/timeline\/(de|en)\//)
+  const match = path.match(/\/(de|en)\/timeline/)
   return match && (match[1] === "de" || match[1] === "en") ? (match[1] as "de" | "en") : "de"
 })()
 
@@ -44,7 +44,9 @@ const ImageCard = memo(
                 alt={title}
                 loading="lazy"
                 decoding="async"
-                className={`w-full h-full object-contain transition-opacity duration-300 ${isLoaded ? "opacity-100" : "opacity-0"}`}
+                className={`w-full h-full object-contain transition-opacity duration-300 ${
+                  isLoaded ? "opacity-100" : "opacity-0"
+                }`}
                 onLoad={() => onImageLoad(identifier)}
                 onError={(e) => {
                   e.currentTarget.style.display = "none"

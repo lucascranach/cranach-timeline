@@ -1,24 +1,30 @@
 import { EventFileConfig } from "@/types/atlas"
+import { Language } from "@/utils/languageUtils"
 
-export const EVENT_FILE_CONFIGS: EventFileConfig[] = [
+import { path } from "@/store/base"
+
+export const getEventFileConfigs = (language: Language): EventFileConfig[] => [
   {
-    file: "/timeline/events/cranachElderEvents_en.json",
+    file: `${path}/events/cranachElderEvents_${language}.json`,
     name: "Cranach Elder",
     color: "#FEB701",
   },
   {
-    file: "/timeline/events/cranachYoungerEvents_en.json",
+    file: `${path}/events/cranachYoungerEvents_${language}.json`,
     name: "Cranach Younger",
     color: "#FEB701",
   },
   {
-    file: "/timeline/events/historyEvents_en.json",
+    file: `${path}/events/historyEvents_${language}.json`,
     name: "History",
     color: "#FEB701",
   },
   {
-    file: "/timeline/events/lutherEvents_en.json",
+    file: `${path}/events/lutherEvents_${language}.json`,
     name: "Luther",
     color: "#FEB701",
   },
 ]
+
+// Keep the old export for backward compatibility
+export const EVENT_FILE_CONFIGS: EventFileConfig[] = getEventFileConfigs("en")

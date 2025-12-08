@@ -2,12 +2,14 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarHeader } f
 import { useSidebarGallery } from "@/hooks/useSidebarGalleryContext"
 import { Separator } from "@/components/ui/separator"
 import { useState, useMemo, useCallback, useRef, useEffect } from "react"
+import { getCurrentLanguage, getLocalizedValue } from "@/utils/languageUtils"
 
 export function AppSidebar() {
   const { focusedYearData, allYearSlides } = useSidebarGallery()
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set())
   const scrollContainerRefs = useRef<Map<number, HTMLDivElement>>(new Map())
   const [prevFocusedYear, setPrevFocusedYear] = useState<number | null>(null)
+  const currentLanguage = getCurrentLanguage()
 
   const handleImageLoad = (identifier: string) => {
     setLoadedImages((prev) => new Set(prev).add(identifier))
@@ -130,8 +132,11 @@ export function AppSidebar() {
                   const identifier = `${image.sorting_number || idx}-${year}`
                   const isLoaded = loadedImages.has(identifier)
                   const inventoryNumber = image["inventory_number\t"]?.trim() || image.sorting_number
-                  const url = inventoryNumber ? `https://lucascranach.org/en/${inventoryNumber}` : null
-                  const title = image.title || inventoryNumber || "Untitled"
+                  const url = inventoryNumber ? `https://lucascranach.org/${currentLanguage}/${inventoryNumber}` : null
+                  const title =
+                    getLocalizedValue(image.title, currentLanguage) ||
+                    inventoryNumber ||
+                    (currentLanguage === "de" ? "Ohne Titel" : "Untitled")
                   return (
                     <div key={identifier} className="space-y-2">
                       <div
