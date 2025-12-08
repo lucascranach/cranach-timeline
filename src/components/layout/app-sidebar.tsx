@@ -85,7 +85,7 @@ export function AppSidebar() {
         {/* All Events for this year */}
         {events.length > 0 ? (
           <div className="space-y-4 animate-in fade-in duration-300">
-            <div className="text-xs font-semibold text-white/50 uppercase tracking-wider">
+            <div className="text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider">
               Events ({events.reduce((sum, g) => sum + g.processedEvents.length, 0)})
             </div>
             {events.map((eventGroup) => (
@@ -100,11 +100,11 @@ export function AppSidebar() {
                       key={eventId}
                       className="border-l-2 border-white/10 pl-4 py-1 transition-all duration-200 hover:border-primary/60"
                     >
-                      <div className="text-xs font-medium text-white/60 mb-1.5">
+                      <div className="text-xs font-medium text-sidebar-foreground/60 mb-1.5">
                         {formatDate(event.event.startDate)}
                       </div>
                       <div
-                        className="text-sm leading-relaxed text-white/85 [&_p]:text-white/85 [&_strong]:text-white [&_em]:text-white/80 [&_a]:text-primary [&_a]:underline"
+                        className="text-sm leading-relaxed text-sidebar-foreground/85 [&_p]:text-sidebar-foreground/85 [&_strong]:text-sidebar-foreground [&_em]:text-sidebar-foreground/80 [&_a]:text-primary [&_a]:underline"
                         dangerouslySetInnerHTML={{ __html: event.event.description }}
                       />
                     </div>
@@ -115,7 +115,7 @@ export function AppSidebar() {
           </div>
         ) : (
           <div className="px-2 py-8 text-center">
-            <p className="text-sm text-white/40">No events recorded for this year</p>
+            <p className="text-sm text-sidebar-foreground/40">No events recorded for this year</p>
           </div>
         )}
 
@@ -124,7 +124,7 @@ export function AppSidebar() {
           <>
             {events.length > 0 && <Separator className="my-6 opacity-30" />}
             <div className="space-y-4 animate-in fade-in duration-300">
-              <div className="text-xs font-semibold text-white/50 uppercase tracking-wider">
+              <div className="text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider">
                 Artworks ({images.length})
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -169,7 +169,7 @@ export function AppSidebar() {
                           )}
                         </div>
                       </div>
-                      <div className="text-xs text-white/70 leading-tight line-clamp-2">{title}</div>
+                      <div className="text-xs text-sidebar-foreground/70 leading-tight line-clamp-2">{title}</div>
                     </div>
                   )
                 })}
@@ -180,7 +180,7 @@ export function AppSidebar() {
           <>
             {events.length > 0 && <Separator className="my-6 opacity-30" />}
             <div className="px-2 py-8 text-center">
-              <p className="text-sm text-white/40">No artworks available for this year</p>
+              <p className="text-sm text-sidebar-foreground/40">No artworks available for this year</p>
             </div>
           </>
         )}
@@ -193,7 +193,7 @@ export function AppSidebar() {
       <SidebarHeader>
         <div className="px-6 py-5 border-b border-white/5">
           <div className="flex items-center justify-start">
-            <h2 className="text-3xl font-light tracking-tight text-white">
+            <h2 className="text-3xl font-light tracking-tight text-sidebar-foreground">
               {focusedYearData ? focusedYearData.year : "Timeline"}
             </h2>
           </div>
@@ -242,7 +242,7 @@ export function AppSidebar() {
               </div>
             </div>
           ) : (
-            <div className="px-6 py-12 text-center text-white/40 font-light">
+            <div className="px-6 py-12 text-center text-sidebar-foreground/40 font-light">
               Scroll through the timeline to see details
             </div>
           )}

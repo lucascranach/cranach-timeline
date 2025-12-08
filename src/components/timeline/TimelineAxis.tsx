@@ -1,4 +1,5 @@
-import { Fragment } from "react"
+import { Fragment, useState, useEffect } from "react"
+import * as THREE from "three"
 
 interface TimelineAxisProps {
   yearKeys: string[]
@@ -9,6 +10,29 @@ interface TimelineAxisProps {
 }
 
 const TimelineAxis = ({ yearKeys, yearPositions, thumbnailHeight, majorTickEvery, showAxis }: TimelineAxisProps) => {
+  const [axisColor, setAxisColor] = useState("#ffffff")
+  const [tickMajorColor, setTickMajorColor] = useState("#bbbbbb")
+  const [tickMinorColor, setTickMinorColor] = useState("#666666")
+
+  useEffect(() => {
+    const updateColors = () => {
+      const styles = getComputedStyle(document.documentElement)
+      setAxisColor(styles.getPropertyValue("--canvas-axis").trim())
+      setTickMajorColor(styles.getPropertyValue("--canvas-tick-major").trim())
+      setTickMinorColor(styles.getPropertyValue("--canvas-tick-minor").trim())
+    }
+
+    updateColors()
+
+    const observer = new MutationObserver(updateColors)
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    })
+
+    return () => observer.disconnect()
+  }, [])
+
   if (!showAxis || !yearKeys.length) {
     return null
   }
@@ -23,7 +47,7 @@ const TimelineAxis = ({ yearKeys, yearPositions, thumbnailHeight, majorTickEvery
       {/* Baseline spanning full years range */}
       <mesh position={[axisStart + axisWidth / 2, baselineY, -0.001]}>
         <planeGeometry args={[axisWidth, 0.1]} />
-        <meshBasicMaterial color="#fff" />
+        <meshBasicMaterial color={axisColor} />
       </mesh>
 
       {/* Tick marks */}
@@ -36,7 +60,7 @@ const TimelineAxis = ({ yearKeys, yearPositions, thumbnailHeight, majorTickEvery
         return (
           <mesh key={`tick-${year}`} position={[x, y, -0.002]}>
             <planeGeometry args={[0.005, height]} />
-            <meshBasicMaterial color={isMajor ? "#bbb" : "#666"} />
+            <meshBasicMaterial color={isMajor ? tickMajorColor : tickMinorColor} />
           </mesh>
         )
       })}

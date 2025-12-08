@@ -1,5 +1,5 @@
 import { Html } from "@react-three/drei"
-import { useMemo } from "react"
+import { useMemo, useState, useEffect } from "react"
 
 interface YearLabel {
   x: number
@@ -25,6 +25,25 @@ const YearLabels = ({
   yearPositions,
   isZoomed,
 }: YearLabelsProps) => {
+  const [textColor, setTextColor] = useState("#ffffff")
+
+  useEffect(() => {
+    const updateColors = () => {
+      const styles = getComputedStyle(document.documentElement)
+      setTextColor(styles.getPropertyValue("--canvas-text").trim())
+    }
+
+    updateColors()
+
+    const observer = new MutationObserver(updateColors)
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    })
+
+    return () => observer.disconnect()
+  }, [])
+
   // Generate 5-year step labels when zoomed
   const fiveYearLabels = useMemo(() => {
     if (!isZoomed || !yearPositions) return []
@@ -109,11 +128,11 @@ const YearLabels = ({
                 lineHeight: 1,
                 fontWeight: isFiveYear ? 400 : 500,
                 fontFamily: "system-ui, sans-serif",
-                color: isFiveYear ? "#aaa" : "#fff",
-                textShadow: "0 0 4px rgba(0,0,0,0.8)",
+                color: textColor,
+                textShadow: "0 0 4px rgba(0,0,0,0.3)",
                 whiteSpace: "nowrap",
                 transform: "translateY(-2px)",
-                opacity: isFiveYear ? 0.8 : 1,
+                opacity: isFiveYear ? 0.7 : 1,
               }}
             >
               {lbl.year}

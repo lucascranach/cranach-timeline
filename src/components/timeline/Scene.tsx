@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react"
+import { useRef, useEffect, useState } from "react"
 import * as THREE from "three/webgpu"
 import * as TSL from "three/tsl"
 import { Canvas, extend, useFrame, useThree, type ThreeToJSXElements } from "@react-three/fiber"
@@ -153,6 +153,30 @@ const TimelineControls = () => {
   )
 }
 
+// Component to update canvas background color on theme change
+const CanvasBackground = () => {
+  const { gl } = useThree()
+
+  useEffect(() => {
+    const updateBackground = () => {
+      const canvasBg = getComputedStyle(document.documentElement).getPropertyValue("--canvas-bg").trim()
+      gl.setClearColor(new THREE.Color(canvasBg), 1)
+    }
+
+    updateBackground()
+
+    const observer = new MutationObserver(updateBackground)
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    })
+
+    return () => observer.disconnect()
+  }, [gl])
+
+  return null
+}
+
 const Scene = () => {
   // Enable fullscreen toggle via 'f' or 'F'
   useEffect(() => {
@@ -192,13 +216,15 @@ const Scene = () => {
           forceWebGL: true,
         })
         await renderer.init()
-        renderer.setClearColor(new THREE.Color("#18181a"), 1)
+        const canvasBg = getComputedStyle(document.documentElement).getPropertyValue("--canvas-bg").trim()
+        renderer.setClearColor(new THREE.Color(canvasBg), 1)
         return renderer
       }}
       id="webgpu-canvas"
       style={{ width: "100vw", height: "100vh" }}
       shadows
     >
+      <CanvasBackground />
       <Experience />
       {/* HUD-style plane fixed to camera, positioned below timeline for UI / backdrop */}
 

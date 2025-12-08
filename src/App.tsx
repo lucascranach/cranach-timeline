@@ -4,11 +4,13 @@ import Scene from "@/components/timeline/Scene"
 import ZoomToggle from "@/components/timeline/ZoomToggle"
 import RelatedEventsToggle from "@/components/timeline/RelatedEventsToggle"
 import { ImagePrefetchIndicator } from "@/components/timeline/ImagePrefetchIndicator"
+import { ThemeToggle } from "@/components/timeline/ThemeToggle"
 import { Leva } from "leva"
 import { ZoomProvider, useZoomContext } from "./hooks/useZoomContext"
 import { SelectedEventProvider } from "./hooks/useSelectedEventContext"
 import { RelatedEventsProvider, useRelatedEventsContext } from "./hooks/useRelatedEventsContext"
 import { SidebarGalleryProvider } from "./hooks/useSidebarGalleryContext"
+import { ThemeProvider } from "./hooks/useThemeContext"
 import { Provider as JotaiProvider } from "jotai"
 
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
@@ -57,6 +59,7 @@ const AppContent = () => {
   return (
     <>
       {/* <SidebarTriggerButton /> */}
+      <ThemeToggle />
       <ZoomToggle isEnabled={enableZoomStep} onToggle={setEnableZoomStep} />
       {/* <RelatedEventsToggle isEnabled={keepRelatedEventsOpen} onToggle={setKeepRelatedEventsOpen} /> */}
       <ImagePrefetchIndicator />
@@ -69,22 +72,24 @@ const AppContent = () => {
 
 function App() {
   return (
-    <JotaiProvider>
-      <ZoomProvider>
-        <SelectedEventProvider>
-          <RelatedEventsProvider>
-            <SidebarGalleryProvider>
-              <SidebarProvider defaultOpen={true}>
-                <div style={{ width: "100%", height: "100vh", position: "relative" }}>
-                  <AppContent />
-                  <AppSidebar />
-                </div>
-              </SidebarProvider>
-            </SidebarGalleryProvider>
-          </RelatedEventsProvider>
-        </SelectedEventProvider>
-      </ZoomProvider>
-    </JotaiProvider>
+    <ThemeProvider>
+      <JotaiProvider>
+        <ZoomProvider>
+          <SelectedEventProvider>
+            <RelatedEventsProvider>
+              <SidebarGalleryProvider>
+                <SidebarProvider defaultOpen={true}>
+                  <div style={{ width: "100%", height: "100vh", position: "relative" }}>
+                    <AppContent />
+                    <AppSidebar />
+                  </div>
+                </SidebarProvider>
+              </SidebarGalleryProvider>
+            </RelatedEventsProvider>
+          </SelectedEventProvider>
+        </ZoomProvider>
+      </JotaiProvider>
+    </ThemeProvider>
   )
 }
 
