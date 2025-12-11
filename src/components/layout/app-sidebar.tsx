@@ -96,10 +96,7 @@ export function AppSidebar() {
                 {eventGroup.processedEvents.map((event: any, index: number) => {
                   const eventId = `${eventGroup.name}-${index}-${year}`
                   return (
-                    <div
-                      key={eventId}
-                      className="border-l-2 border-white/10 pl-4 py-1 transition-all duration-200 hover:border-primary/60"
-                    >
+                    <div key={eventId} className="py-1">
                       <div className="text-xs font-medium text-sidebar-foreground/60 mb-1.5">
                         {formatDate(event.event.startDate)}
                       </div>
@@ -140,10 +137,10 @@ export function AppSidebar() {
                   return (
                     <div key={identifier} className="space-y-2">
                       <div
-                        className="relative overflow-hidden border border-white/8 cursor-pointer hover:border-primary/40 transition-all duration-300 hover:scale-[1.03] group"
+                        className="relative overflow-hidden border border-white/8 cursor-pointer hover:border-b hover:border-b-[#feb701] group transition-[border-color] duration-800"
                         onClick={() => url && window.open(url, "_blank")}
                       >
-                        <div className="relative aspect-3/4 bg-black/20">
+                        <div className="relative aspect-square bg-[#0000001a] hover:bg-[#0003] transition-[background-color] duration-200">
                           {!isLoaded && (
                             <div className="absolute inset-0 flex items-center justify-center">
                               <div className="animate-pulse bg-white/5 w-full h-full" />
@@ -154,9 +151,7 @@ export function AppSidebar() {
                               src={image.original_url}
                               alt={title}
                               loading="lazy"
-                              className={`w-full h-full object-contain transition-all duration-500 group-hover:scale-105 ${
-                                isLoaded ? "opacity-100" : "opacity-0"
-                              }`}
+                              className={`w-full h-full object-contain ${isLoaded ? "opacity-100" : "opacity-0"}`}
                               onLoad={() => handleImageLoad(identifier)}
                               onError={(e) => {
                                 e.currentTarget.style.display = "none"
