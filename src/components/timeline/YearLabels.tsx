@@ -129,7 +129,6 @@ const YearLabels = ({
                 fontWeight: isFiveYear ? 400 : 500,
                 fontFamily: "system-ui, sans-serif",
                 color: textColor,
-                textShadow: "0 0 4px rgba(0,0,0,0.3)",
                 whiteSpace: "nowrap",
                 transform: "translateY(-2px)",
                 opacity: isFiveYear ? 0.7 : 1,
