@@ -32,7 +32,7 @@ import { path } from "@/store/base"
  * Main Atlas component - renders the timeline with thumbnails, events, and backgrounds
  */
 const Atlas = () => {
-  const atlasTexture = useLoader(THREE.TextureLoader, `${path}/atlas/texture_atlas.webp`)
+  const atlasTexture = useLoader(THREE.TextureLoader, "/data-proxy/texture-atlas/texture-atlas.webp")
 
   // Controls and context
   const controls = useAtlasControls()

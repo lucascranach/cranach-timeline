@@ -32,7 +32,7 @@ const Title = styled.h1`
   margin: 0;
   padding: 0;
   pointer-events: none;
-  opacity: 0.8;
+  opacity: 0.8f;
   letter-spacing: 0.02em;
 `
 

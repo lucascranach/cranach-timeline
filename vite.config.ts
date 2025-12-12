@@ -33,6 +33,13 @@ export default defineConfig(({ mode }) => {
       host: true, // needed for the Docker Container port mapping to work
       strictPort: true,
       port: 5172, // you can replace this port with any port
+      proxy: {
+        "/data-proxy": {
+          target: "https://lucascranach.org",
+          changeOrigin: true,
+          secure: true,
+        },
+      },
     },
   }
 })

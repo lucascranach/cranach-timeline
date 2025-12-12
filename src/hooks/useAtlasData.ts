@@ -20,7 +20,7 @@ export const useAtlasData = (
 
   // Load atlas data
   useEffect(() => {
-    fetch(`${path}/atlas/texture_atlas.json`)
+    fetch("/data-proxy/texture-atlas/texture-atlas.json")
       .then((response) => response.json())
       .then((data) => setAtlasData(data))
       .catch((err) => console.error("Failed to load atlas data:", err))
