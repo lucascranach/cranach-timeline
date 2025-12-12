@@ -30,10 +30,10 @@ const TimelineControls = () => {
     // Adjustable scroll speed (world units per wheel delta unit)
     const SCROLL_SPEED = 0.04
 
-    // Timeline boundaries - years 1472 to 1950
-    // Assuming REFERENCE_YEAR = 1500 at x = 0, and typical yearSpacing ~= 2
+    // Timeline boundaries - years 1400 to 1950
+    // Assuming REFERENCE_YEAR = 1507 at x = 0, and typical yearSpacing ~= 2
     // We'll use approximate bounds and clamp camera position
-    const MIN_YEAR = 1472
+    const MIN_YEAR = 1400
     const MAX_YEAR = 1950
     const REFERENCE_YEAR = 1507
     const YEAR_SPACING = 2 // approximate, adjust if needed
@@ -113,9 +113,9 @@ const TimelineControls = () => {
     const controls = controlsRef.current
     if (!controls) return
 
-    const MIN_YEAR = 1472
+    const MIN_YEAR = 1400
     const MAX_YEAR = 1950
-    const REFERENCE_YEAR = 1500
+    const REFERENCE_YEAR = 1507
     const YEAR_SPACING = 2
     const MIN_X = (MIN_YEAR - REFERENCE_YEAR) * YEAR_SPACING
     const MAX_X = (MAX_YEAR - REFERENCE_YEAR) * YEAR_SPACING
@@ -221,7 +221,7 @@ const Scene = () => {
         return renderer
       }}
       id="webgpu-canvas"
-      style={{ width: "100vw", height: "100vh" }}
+      style={{ width: "calc(100vw - 24rem)", height: "100vh" }}
       shadows
     >
       <CanvasBackground />
