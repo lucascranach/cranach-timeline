@@ -2,6 +2,13 @@ import { forwardRef, memo } from "react"
 import { Separator } from "@/components/ui/separator"
 import { getCurrentLanguage, getLocalizedValue } from "@/utils/languageUtils"
 
+const eventNameTranslations: Record<string, { de: string; en: string }> = {
+  "Cranach Elder": { de: "Cranach der Ältere", en: "Cranach Elder" },
+  "Cranach Younger": { de: "Cranach der Jüngere", en: "Cranach Younger" },
+  History: { de: "Geschichte", en: "History" },
+  Luther: { de: "Luther", en: "Luther" },
+}
+
 interface YearColumnProps {
   year: number
   events: any[]
@@ -25,27 +32,30 @@ const YearColumn = forwardRef<HTMLDivElement, YearColumnProps>(
                 {currentLanguage === "de" ? "Ereignisse" : "Events"} (
                 {events.reduce((sum: number, g: any) => sum + g.processedEvents.length, 0)})
               </div>
-              {events.map((eventGroup: any) => (
-                <div key={eventGroup.name} className="space-y-3">
-                  <div className="text-xs font-bold uppercase tracking-wider" style={{ color: "rgb(250, 204, 21)" }}>
-                    {eventGroup.name}
-                  </div>
-                  {eventGroup.processedEvents.map((event: any, index: number) => {
-                    const eventId = `${eventGroup.name}-${index}-${year}`
-                    return (
-                      <div key={eventId} className="py-1">
-                        <div className="text-xs font-medium text-sidebar-foreground/60 mb-1.5">
-                          {formatDate(event.event.startDate)}
+              {events.map((eventGroup: any) => {
+                const translatedGroupName = eventNameTranslations[eventGroup.name]?.[currentLanguage] || eventGroup.name
+                return (
+                  <div key={eventGroup.name} className="space-y-3">
+                    <div className="text-xs font-bold uppercase tracking-wider" style={{ color: "rgb(250, 204, 21)" }}>
+                      {translatedGroupName}
+                    </div>
+                    {eventGroup.processedEvents.map((event: any, index: number) => {
+                      const eventId = `${eventGroup.name}-${index}-${year}`
+                      return (
+                        <div key={eventId} className="py-1">
+                          <div className="text-xs font-medium text-sidebar-foreground/60 mb-1.5">
+                            {formatDate(event.event.startDate)}
+                          </div>
+                          <div
+                            className="text-sm leading-relaxed text-sidebar-foreground/85 [&_p]:text-sidebar-foreground/85 [&_strong]:text-sidebar-foreground [&_em]:text-sidebar-foreground/80 [&_a]:text-primary [&_a]:underline"
+                            dangerouslySetInnerHTML={{ __html: event.event.description }}
+                          />
                         </div>
-                        <div
-                          className="text-sm leading-relaxed text-sidebar-foreground/85 [&_p]:text-sidebar-foreground/85 [&_strong]:text-sidebar-foreground [&_em]:text-sidebar-foreground/80 [&_a]:text-primary [&_a]:underline"
-                          dangerouslySetInnerHTML={{ __html: event.event.description }}
-                        />
-                      </div>
-                    )
-                  })}
-                </div>
-              ))}
+                      )
+                    })}
+                  </div>
+                )
+              })}
             </div>
           ) : (
             <div className="px-2 py-8 text-center">
