@@ -12,6 +12,8 @@ import { RelatedEventsProvider, useRelatedEventsContext } from "./hooks/useRelat
 import { SidebarGalleryProvider } from "./hooks/useSidebarGalleryContext"
 import { ThemeProvider } from "./hooks/useThemeContext"
 import { Provider as JotaiProvider } from "jotai"
+import { useEffect } from "react"
+import { getCurrentLanguage } from "./utils/languageUtils"
 
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/layout/app-sidebar"
@@ -19,17 +21,19 @@ import { AppSidebar } from "@/components/layout/app-sidebar"
 import styled from "styled-components"
 
 const Title = styled.h1`
-  position: absolute;
-  top: 3rem;
+  position: fixed;
+  top: 1rem;
   left: 3rem;
-  color: white;
+  color: var(--canvas-text);
   font-family: "IBMPlexSans", sans-serif;
-  font-size: 2rem;
-  font-weight: 100;
-  z-index: 9999;
+  font-size: 3.25rem;
+  font-weight: 300;
+  z-index: 99999;
   margin: 0;
   padding: 0;
   pointer-events: none;
+  opacity: 0.8;
+  letter-spacing: 0.02em;
 `
 
 const SidebarTriggerButton = styled(SidebarTrigger)`
@@ -55,10 +59,16 @@ const SidebarTriggerButton = styled(SidebarTrigger)`
 const AppContent = () => {
   const { enableZoomStep, setEnableZoomStep } = useZoomContext()
   const { keepRelatedEventsOpen, setKeepRelatedEventsOpen } = useRelatedEventsContext()
+  const language = getCurrentLanguage()
+  const pageTitle = language === "de" ? "Lucas Cranach Zeitleiste" : "Lucas Cranach Timeline"
 
   return (
     <>
       {/* <SidebarTriggerButton /> */}
+      <Title>
+        Lucas Cranach <br />
+        Timeline
+      </Title>
       <ThemeToggle />
       <ZoomToggle isEnabled={enableZoomStep} onToggle={setEnableZoomStep} />
       {/* <RelatedEventsToggle isEnabled={keepRelatedEventsOpen} onToggle={setKeepRelatedEventsOpen} /> */}
@@ -71,6 +81,12 @@ const AppContent = () => {
 }
 
 function App() {
+  useEffect(() => {
+    const language = getCurrentLanguage()
+    const title = language === "de" ? "Lucas Cranach Zeitleiste" : "Lucas Cranach Timeline"
+    document.title = title
+  }, [])
+
   return (
     <ThemeProvider>
       <JotaiProvider>
