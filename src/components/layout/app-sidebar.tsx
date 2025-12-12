@@ -39,18 +39,22 @@ export function AppSidebar() {
   }, [focusedYearData?.year])
 
   // Format date nicely - memoized
-  const formatDate = useCallback((dateString: string) => {
-    try {
-      const date = new Date(dateString)
-      return date.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      })
-    } catch {
-      return dateString
-    }
-  }, [])
+  const formatDate = useCallback(
+    (dateString: string) => {
+      try {
+        const date = new Date(dateString)
+        const locale = currentLanguage === "de" ? "de-DE" : "en-US"
+        return date.toLocaleDateString(locale, {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        })
+      } catch {
+        return dateString
+      }
+    },
+    [currentLanguage]
+  )
 
   // Keep more adjacent years loaded (±2) to prevent laggy disappearing effect
   const visibleSlides = useMemo(() => {
@@ -86,7 +90,8 @@ export function AppSidebar() {
         {events.length > 0 ? (
           <div className="space-y-4 animate-in fade-in duration-300">
             <div className="text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider">
-              Events ({events.reduce((sum, g) => sum + g.processedEvents.length, 0)})
+              {currentLanguage === "de" ? "Ereignisse" : "Events"} (
+              {events.reduce((sum, g) => sum + g.processedEvents.length, 0)})
             </div>
             {events.map((eventGroup) => (
               <div key={eventGroup.name} className="space-y-3">
@@ -112,7 +117,9 @@ export function AppSidebar() {
           </div>
         ) : (
           <div className="px-2 py-8 text-center">
-            <p className="text-sm text-sidebar-foreground/40">No events recorded for this year</p>
+            <p className="text-sm text-sidebar-foreground/40">
+              {currentLanguage === "de" ? "Keine Ereignisse für dieses Jahr" : "No events recorded for this year"}
+            </p>
           </div>
         )}
 
@@ -122,7 +129,7 @@ export function AppSidebar() {
             {events.length > 0 && <Separator className="my-6 opacity-30" />}
             <div className="space-y-4 animate-in fade-in duration-300">
               <div className="text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider">
-                Artworks ({images.length})
+                {currentLanguage === "de" ? "Kunstwerke" : "Artworks"} ({images.length})
               </div>
               <div className="grid grid-cols-2 gap-3">
                 {images.map((image: any, idx: number) => {
@@ -175,7 +182,9 @@ export function AppSidebar() {
           <>
             {events.length > 0 && <Separator className="my-6 opacity-30" />}
             <div className="px-2 py-8 text-center">
-              <p className="text-sm text-sidebar-foreground/40">No artworks available for this year</p>
+              <p className="text-sm text-sidebar-foreground/40">
+                {currentLanguage === "de" ? "Keine Kunstwerke für dieses Jahr" : "No artworks available for this year"}
+              </p>
             </div>
           </>
         )}
@@ -238,7 +247,9 @@ export function AppSidebar() {
             </div>
           ) : (
             <div className="px-6 py-12 text-center text-sidebar-foreground/40 font-light">
-              Scroll through the timeline to see details
+              {currentLanguage === "de"
+                ? "Scrollen Sie durch die Zeitleiste, um Details zu sehen"
+                : "Scroll through the timeline to see details"}
             </div>
           )}
         </SidebarGroup>
