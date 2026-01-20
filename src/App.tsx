@@ -73,7 +73,17 @@ const AppContent = () => {
       <ZoomToggle isEnabled={enableZoomStep} onToggle={setEnableZoomStep} />
       {/* <RelatedEventsToggle isEnabled={keepRelatedEventsOpen} onToggle={setKeepRelatedEventsOpen} /> */}
       <ImagePrefetchIndicator />
-      <Leva collapsed hidden />
+      <Leva
+        collapsed
+        titleBar={{
+          // Configure title bar options
+          title: "My Controls", // Custom title
+          drag: true, // Enable dragging
+          filter: true, // Enable filter/search
+          position: { x: 0, y: 0 }, // Initial position (when drag is enabled)
+          onDrag: (position) => {}, // Callback when dragged
+        }}
+      />
 
       <Scene />
     </>
