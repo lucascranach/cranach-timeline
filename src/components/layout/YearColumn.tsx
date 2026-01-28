@@ -75,7 +75,9 @@ const YearColumn = forwardRef<HTMLDivElement, YearColumnProps>(
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   {images.map((image: any, idx: number) => {
-                    const identifier = `${image.sorting_number || idx}-${year}`
+                    const uniquePart =
+                      image.original_url || image.filename || image.img_src || `${image.sorting_number || "img"}-${idx}`
+                    const identifier = `${year}-${uniquePart}`
                     const isLoaded = loadedImages.has(identifier)
                     const inventoryNumber = image["inventory_number\t"]?.trim() || image.sorting_number
                     const url = inventoryNumber

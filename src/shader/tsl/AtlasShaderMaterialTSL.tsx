@@ -1,8 +1,18 @@
 import * as THREE from "three/webgpu"
 import * as TSL from "three/tsl"
 
-export const AtlasShaderMaterialTSL = (atlasTexture: THREE.Texture, cropSettings = {}) => {
-  const atlasTextureNode = TSL.texture(atlasTexture)
+type AtlasTextureInput =
+  | THREE.Texture
+  | {
+      top: THREE.Texture
+      bottom: THREE.Texture
+      vBoundary: number
+    }
+
+export const AtlasShaderMaterialTSL = (atlasTexture: AtlasTextureInput, cropSettings = {}) => {
+  const atlasTextureNode = atlasTexture instanceof THREE.Texture ? TSL.texture(atlasTexture) : null
+  const atlasTextureTopNode = atlasTexture instanceof THREE.Texture ? null : TSL.texture(atlasTexture.top)
+  const atlasTextureBottomNode = atlasTexture instanceof THREE.Texture ? null : TSL.texture(atlasTexture.bottom)
 
   const fragmentUV = TSL.uv()
 
@@ -15,7 +25,27 @@ export const AtlasShaderMaterialTSL = (atlasTexture: THREE.Texture, cropSettings
     fragmentUV // Current fragment position (0-1)
   )
 
-  const sampledColor = atlasTextureNode.sample(atlasUV)
+  const sampledColor = (() => {
+    // Default path: single atlas texture
+    if (atlasTextureNode) return atlasTextureNode.sample(atlasUV)
+
+    // Fallback path: atlas is vertically sliced into two textures.
+    // Global UV space has v=1 at top and v=0 at bottom.
+    const v = atlasUV.y
+    const u = atlasUV.x
+    const vBoundary = TSL.float((atlasTexture as Exclude<AtlasTextureInput, THREE.Texture>).vBoundary)
+
+    // step(edge, x) -> 0 when x < edge, else 1
+    const useTop = TSL.step(vBoundary, v)
+
+    const localVTop = TSL.div(TSL.sub(v, vBoundary), TSL.sub(1.0, vBoundary))
+    const localVBottom = TSL.div(v, vBoundary)
+
+    const topSample = atlasTextureTopNode!.sample(TSL.vec2(u, localVTop))
+    const bottomSample = atlasTextureBottomNode!.sample(TSL.vec2(u, localVBottom))
+
+    return TSL.mix(bottomSample, topSample, useTop)
+  })()
 
   const alpha = TSL.mul(sampledColor.a, instanceOpacity)
   const finalColor = TSL.vec4(sampledColor.rgb, alpha)

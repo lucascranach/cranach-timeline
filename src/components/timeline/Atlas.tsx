@@ -1,5 +1,5 @@
 import { useLoader } from "@react-three/fiber"
-import * as THREE from "three"
+import * as THREE from "three/webgpu"
 import { AtlasShaderMaterialTSL } from "@/shader/tsl/AtlasShaderMaterialTSL"
 import { useMemo, useState, useCallback, useEffect, useRef } from "react"
 import { useAtlasControls } from "@/hooks/useAtlasControls"
@@ -33,6 +33,94 @@ import { path } from "@/store/base"
  */
 const Atlas = () => {
   const atlasTexture = useLoader(THREE.TextureLoader, "/data-proxy/texture-atlas/texture-atlas.webp")
+
+  const [slicedAtlas, setSlicedAtlas] = useState<null | {
+    top: THREE.Texture
+    bottom: THREE.Texture
+    vBoundary: number
+  }>(null)
+
+  // Firefox (and some WebGL fallback paths) can render NPOT textures as black if mipmaps are enabled.
+  // Our atlas is NPOT (e.g. 2292x10663), so force safe settings.
+  useEffect(() => {
+    if (!atlasTexture) return
+
+    // If the atlas exceeds common max texture sizes (notably 8192 on some Firefox/driver combos),
+    // create two smaller CanvasTextures and sample them in the shader.
+    const img: any = (atlasTexture as any).image
+    const imgW = img?.width
+    const imgH = img?.height
+    const MAX_SAFE_SIZE = 8192
+
+    if (typeof imgW === "number" && typeof imgH === "number" && (imgW > MAX_SAFE_SIZE || imgH > MAX_SAFE_SIZE)) {
+      const sliceH = Math.min(MAX_SAFE_SIZE, imgH)
+      const bottomH = imgH - sliceH
+      if (bottomH > 0) {
+        const canvasTop = document.createElement("canvas")
+        canvasTop.width = imgW
+        canvasTop.height = sliceH
+        const ctxTop = canvasTop.getContext("2d")
+        if (!ctxTop) return
+        ctxTop.drawImage(img, 0, 0, imgW, sliceH, 0, 0, imgW, sliceH)
+
+        const canvasBottom = document.createElement("canvas")
+        canvasBottom.width = imgW
+        canvasBottom.height = bottomH
+        const ctxBottom = canvasBottom.getContext("2d")
+        if (!ctxBottom) return
+        ctxBottom.drawImage(img, 0, sliceH, imgW, bottomH, 0, 0, imgW, bottomH)
+
+        const topTex = new THREE.CanvasTexture(canvasTop)
+        const bottomTex = new THREE.CanvasTexture(canvasBottom)
+
+        for (const t of [topTex, bottomTex]) {
+          t.generateMipmaps = false
+          t.minFilter = THREE.LinearFilter
+          t.magFilter = THREE.LinearFilter
+          t.wrapS = THREE.ClampToEdgeWrapping
+          t.wrapT = THREE.ClampToEdgeWrapping
+          t.flipY = true
+          if ((THREE as any).SRGBColorSpace) {
+            ;(t as any).colorSpace = (THREE as any).SRGBColorSpace
+          }
+          t.needsUpdate = true
+        }
+
+        const vBoundary = 1 - sliceH / imgH
+
+        setSlicedAtlas((prev) => {
+          prev?.top.dispose()
+          prev?.bottom.dispose()
+          return { top: topTex, bottom: bottomTex, vBoundary }
+        })
+        return
+      }
+    }
+
+    // Default single-texture path
+    setSlicedAtlas((prev) => {
+      prev?.top.dispose()
+      prev?.bottom.dispose()
+      return null
+    })
+
+    atlasTexture.generateMipmaps = false
+    atlasTexture.minFilter = THREE.LinearFilter
+    atlasTexture.magFilter = THREE.LinearFilter
+    atlasTexture.wrapS = THREE.ClampToEdgeWrapping
+    atlasTexture.wrapT = THREE.ClampToEdgeWrapping
+
+    // Atlas JSON uses top-left origin; Three's default `flipY=true` matches the UV conversion
+    // used in `useAtlasGeometry`.
+    atlasTexture.flipY = true
+
+    // Best-effort: keep correct colors if the renderer supports it.
+    if ((THREE as any).SRGBColorSpace) {
+      ;(atlasTexture as any).colorSpace = (THREE as any).SRGBColorSpace
+    }
+
+    atlasTexture.needsUpdate = true
+  }, [atlasTexture])
 
   // Controls and context
   const controls = useAtlasControls()
@@ -282,10 +370,13 @@ const Atlas = () => {
 
   // Create atlas material
   const atlasMaterial = useMemo(() => {
-    if (!atlasTexture || !atlasData) return null
+    if (!atlasData) return null
 
-    return AtlasShaderMaterialTSL(atlasTexture, cropSettings)
-  }, [atlasTexture, atlasData, cropSettings])
+    const texInput = slicedAtlas ?? atlasTexture
+    if (!texInput) return null
+
+    return AtlasShaderMaterialTSL(texInput as any, cropSettings)
+  }, [atlasTexture, slicedAtlas, atlasData, cropSettings])
 
   // Geometry with attributes (uses base dimensions to prevent recreation during zoom)
   const geometryWithAttributes = useAtlasGeometry(

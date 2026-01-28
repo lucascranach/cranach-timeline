@@ -1,5 +1,5 @@
 import { useRef, useEffect, useMemo } from "react"
-import * as THREE from "three"
+import * as THREE from "three/webgpu"
 
 interface AtlasImage {
   filename: string

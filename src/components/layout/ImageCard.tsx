@@ -18,7 +18,9 @@ interface ImageCardProps {
 
 const ImageCard = memo(
   ({ image, idx, year, isLoaded, onImageLoad }: ImageCardProps) => {
-    const identifier = `${image.sorting_number || idx}-${year}`
+    const uniquePart =
+      image.original_url || image.filename || image.img_src || `${image.sorting_number || "img"}-${idx}`
+    const identifier = `${year}-${uniquePart}`
     const inventoryNumber = image["inventory_number\t"]?.trim() || image.sorting_number
     const url = inventoryNumber ? `https://lucascranach.org/${CURRENT_LANGUAGE}/${inventoryNumber}` : null
     const title =

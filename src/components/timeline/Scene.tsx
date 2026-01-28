@@ -20,6 +20,9 @@ const TimelineControls = () => {
   const { camera, gl } = useThree()
   const controlsRef = useRef<any>(null)
 
+  const wheelVelocityRef = useRef(0)
+  const targetXRef = useRef<number | null>(null)
+
   useEffect(() => {
     const controls = controlsRef.current
     if (!controls) return
@@ -28,7 +31,8 @@ const TimelineControls = () => {
     const initialTargetY = controls.target.y
 
     // Adjustable scroll speed (world units per wheel delta unit)
-    const SCROLL_SPEED = 0.04
+    // Kept small because we apply inertia in the render loop.
+    const SCROLL_SPEED = 0.0025
 
     // Timeline boundaries - years 1400 to 1950
     // Assuming REFERENCE_YEAR = 1507 at x = 0, and typical yearSpacing ~= 2
@@ -48,20 +52,20 @@ const TimelineControls = () => {
 
       // Use deltaY for horizontal move (invert if desired). Shift+scroll can naturally be horizontal in some OS; unify here.
       const raw = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY
-      const deltaX = raw * SCROLL_SPEED
 
-      // Calculate new position and clamp to boundaries
-      let newX = camera.position.x + deltaX
-      newX = Math.max(MIN_X, Math.min(MAX_X, newX))
+      // Bootstrap target on first interaction
+      if (targetXRef.current === null) targetXRef.current = camera.position.x
 
-      camera.position.x = newX
-      controls.target.x = newX
+      // Add wheel energy; actual motion happens in the render loop
+      wheelVelocityRef.current += raw * SCROLL_SPEED
 
-      // Lock Y axes
+      // Clamp velocity to avoid giant jumps on touchpads with momentum bursts
+      const MAX_V = 1.75
+      wheelVelocityRef.current = Math.max(-MAX_V, Math.min(MAX_V, wheelVelocityRef.current))
+
+      // Lock Y axes immediately to prevent drift
       camera.position.y = initialY
       controls.target.y = initialTargetY
-
-      controls.update()
     }
 
     const canvas = gl.domElement
@@ -108,8 +112,8 @@ const TimelineControls = () => {
     }
   }, [gl, camera])
 
-  // Clamp camera position on every frame (for panning with mouse drag)
-  useFrame(() => {
+  // Smooth scroll + clamp (also covers panning with mouse drag)
+  useFrame((_state, delta) => {
     const controls = controlsRef.current
     if (!controls) return
 
@@ -120,14 +124,36 @@ const TimelineControls = () => {
     const MIN_X = (MIN_YEAR - REFERENCE_YEAR) * YEAR_SPACING
     const MAX_X = (MAX_YEAR - REFERENCE_YEAR) * YEAR_SPACING
 
-    // Clamp camera X position
-    if (camera.position.x < MIN_X) {
-      camera.position.x = MIN_X
-      controls.target.x = MIN_X
-    } else if (camera.position.x > MAX_X) {
-      camera.position.x = MAX_X
-      controls.target.x = MAX_X
+    // Initialize target from current camera position if needed
+    if (targetXRef.current === null) targetXRef.current = camera.position.x
+
+    // Exponential decay for inertial scrolling
+    const damping = Math.pow(0.0005, delta) // frame-rate independent
+    wheelVelocityRef.current *= damping
+
+    // Integrate into target X
+    targetXRef.current += wheelVelocityRef.current
+
+    // Clamp target X
+    if (targetXRef.current < MIN_X) {
+      targetXRef.current = MIN_X
+      wheelVelocityRef.current = 0
+    } else if (targetXRef.current > MAX_X) {
+      targetXRef.current = MAX_X
+      wheelVelocityRef.current = 0
     }
+
+    // Smoothly follow target
+    const currentX = camera.position.x
+    const lerp = 1 - Math.pow(0.00001, delta) // frame-rate independent
+    const nextX = currentX + (targetXRef.current - currentX) * lerp
+
+    camera.position.x = nextX
+    controls.target.x = nextX
+
+    // Lock Y axes
+    camera.position.y = camera.position.y
+    controls.update()
   })
 
   return (
@@ -209,10 +235,11 @@ const Scene = () => {
   return (
     <Canvas
       flat
+      dpr={[1, 1.5]}
       gl={async (props) => {
         const renderer = new THREE.WebGPURenderer({
           ...(props as unknown as ConstructorParameters<typeof THREE.WebGPURenderer>[0]),
-          antialias: true,
+          antialias: false,
           forceWebGL: true,
         })
         await renderer.init()
@@ -222,7 +249,6 @@ const Scene = () => {
       }}
       id="webgpu-canvas"
       style={{ width: "calc(100vw - 24rem)", height: "100vh" }}
-      shadows
     >
       <CanvasBackground />
       <Experience />
