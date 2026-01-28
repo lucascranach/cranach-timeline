@@ -2,26 +2,6 @@
 
 An interactive 3D timeline visualization of Lucas Cranach the Elder and Younger's artworks, built with React, Three.js (WebGPU), and TypeScript.
 
-## Features
-
-- **3D Timeline Visualization**: Navigate through centuries of artwork using WebGPU-powered rendering
-- **Texture Atlas**: Efficient image loading with a pre-generated texture atlas
-- **Multi-language Support**: German and English translations
-- **Event Categories**: View events related to Cranach Elder, Cranach Younger, Luther, and historical context
-- **Responsive Controls**: Mouse wheel horizontal scrolling, pan controls, and zoom functionality
-- **Theme Support**: Light and dark mode toggle
-- **Sidebar Gallery**: Detailed view of selected artworks and events
-
-## Tech Stack
-
-- **Framework**: React 19 with TypeScript
-- **3D Rendering**: Three.js (WebGPU) with React Three Fiber & Drei
-- **Styling**: Tailwind CSS 4, styled-components
-- **State Management**: Jotai
-- **UI Components**: Radix UI (Dialog, Tooltip, Separator)
-- **Build Tool**: Vite 7
-- **Dev Tools**: Leva (debug controls)
-
 ## Installation
 
 1. Clone the repository
@@ -68,8 +48,9 @@ Open [http://localhost:5172/timeline](http://localhost:5172/timeline) in your we
 
 ```
 public/
-├── atlas/               # Texture atlas data
+├── atlas/               # Example Texture atlas data
 │   └── texture_atlas.json
+│   └── texture_atlas.webp
 └── events/              # Event data files (JSON)
     ├── cranachElderEvents_de.json
     ├── cranachElderEvents_en.json
@@ -156,6 +137,29 @@ The timeline displays events from four categories:
 | Variable    | Description              |
 | ----------- | ------------------------ |
 | `VITE_PATH` | Base path for deployment |
+
+## Data Proxy
+
+The development server includes a proxy configuration to fetch assets from the Lucas Cranach Archive server. This is configured in `vite.config.ts`:
+
+```typescript
+proxy: {
+  "/data-proxy": {
+    target: "https://lucascranach.org",
+    changeOrigin: true,
+    secure: true,
+  },
+},
+```
+
+### Proxied Resources
+
+| Resource       | Proxy URL                              | Target URL                                          |
+| -------------- | -------------------------------------- | --------------------------------------------------- |
+| **Atlas JSON** | `/data-proxy/data/timeline/atlas.json` | `https://lucascranach.org/data/timeline/atlas.json` |
+| **Atlas WebP** | `/data-proxy/data/timeline/atlas.webp` | `https://lucascranach.org/data/timeline/atlas.webp` |
+
+This proxy setup avoids CORS issues during development when fetching the texture atlas data and images from the external server.
 
 ## License
 
