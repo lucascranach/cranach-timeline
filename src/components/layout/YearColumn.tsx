@@ -90,7 +90,10 @@ const YearColumn = forwardRef<HTMLDivElement, YearColumnProps>(
 
                     return (
                       <div key={identifier} className="space-y-2">
-                        <div className="relative overflow-hidden border border-white/8">
+                        <div
+                          className="relative overflow-hidden border border-white/8 cursor-pointer hover:border-b-[rgb(254,183,1)] transition-colors"
+                          onClick={() => url && window.open(url, "_blank")}
+                        >
                           <div className="relative aspect-square bg-[#0000001a]">
                             {!isLoaded && (
                               <div className="absolute inset-0 flex items-center justify-center">

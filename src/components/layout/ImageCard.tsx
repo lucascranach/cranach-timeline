@@ -31,7 +31,7 @@ const ImageCard = memo(
     return (
       <div className="space-y-2">
         <div
-          className="relative overflow-hidden cursor-pointer border-b border-transparent hover:border-[rgb(254,183,1)]"
+          className="relative overflow-hidden cursor-pointer border-b border-transparent hover:border-b-[rgb(254,183,1)]"
           onClick={() => url && window.open(url, "_blank")}
         >
           <div className="relative aspect-3/4" style={{ backgroundColor: "#0000001a" }}>
