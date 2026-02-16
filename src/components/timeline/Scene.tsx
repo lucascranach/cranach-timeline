@@ -160,7 +160,7 @@ const TimelineControls = () => {
     <MapControls
       ref={controlsRef}
       enableRotate={false}
-      enablePan={true}
+      enablePan={false}
       enableZoom={false}
       enableDamping={false}
       panSpeed={1}
