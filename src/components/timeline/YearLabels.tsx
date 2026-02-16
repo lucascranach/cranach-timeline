@@ -127,7 +127,7 @@ const YearLabels = ({
                 fontSize: isFiveYear ? "14px" : "16px",
                 lineHeight: 1,
                 fontWeight: isFiveYear ? 400 : 500,
-                fontFamily: "system-ui, sans-serif",
+                fontFamily: "IBMPlexSans, sans-serif",
                 color: textColor,
                 whiteSpace: "nowrap",
                 transform: "translateY(-2px)",
