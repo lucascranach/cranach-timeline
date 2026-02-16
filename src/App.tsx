@@ -15,6 +15,7 @@ import { getCurrentLanguage } from "./utils/languageUtils"
 
 import { SidebarProvider } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/layout/app-sidebar"
+import { MobileBlocker } from "@/components/layout/MobileBlocker"
 
 import styled from "styled-components"
 
@@ -72,18 +73,20 @@ function App() {
   return (
     <ThemeProvider>
       <JotaiProvider>
-        <ZoomProvider>
-          <SelectedEventProvider>
-            <SidebarGalleryProvider>
-              <SidebarProvider defaultOpen={true}>
-                <div style={{ width: "100%", height: "100vh", position: "relative" }}>
-                  <AppContent />
-                  <AppSidebar />
-                </div>
-              </SidebarProvider>
-            </SidebarGalleryProvider>
-          </SelectedEventProvider>
-        </ZoomProvider>
+        <MobileBlocker>
+          <ZoomProvider>
+            <SelectedEventProvider>
+              <SidebarGalleryProvider>
+                <SidebarProvider defaultOpen={true}>
+                  <div style={{ width: "100%", height: "100vh", position: "relative" }}>
+                    <AppContent />
+                    <AppSidebar />
+                  </div>
+                </SidebarProvider>
+              </SidebarGalleryProvider>
+            </SelectedEventProvider>
+          </ZoomProvider>
+        </MobileBlocker>
       </JotaiProvider>
     </ThemeProvider>
   )
