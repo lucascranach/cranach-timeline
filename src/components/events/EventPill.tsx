@@ -96,18 +96,6 @@ const EventPill = ({
     if (anyChanged) ref.current.instanceMatrix.needsUpdate = true
   })
 
-  const onClick = useCallback(
-    (e) => {
-      e.stopPropagation()
-      const instanceId = e.instanceId
-      const processed = group.processedEvents[instanceId]
-      if (processed) {
-        onEventClick(processed, group, instanceId)
-      }
-    },
-    [group, onEventClick]
-  )
-
   const { darkColor, groupBaseColor, selectedColor } = createEventColors(group.color)
 
   // Initial color setup (all dark color)
@@ -169,10 +157,9 @@ const EventPill = ({
       name={`event-group-${group.name}-instances`}
       ref={ref}
       args={[undefined, undefined, count]}
-      onClick={onClick}
       onPointerMove={(e) => {
         e.stopPropagation()
-        document.body.style.cursor = "pointer"
+        document.body.style.cursor = "auto"
         const instanceId = e.instanceId
         if (instanceId !== undefined) {
           const payload = { group: group.name, instance: instanceId }
