@@ -31,7 +31,7 @@ const ThumbnailMesh = ({
 }: ThumbnailMeshProps) => {
   // Create the mesh once and persist it
   const meshObject = useMemo(() => {
-    console.log("🔨 Creating new InstancedMesh object")
+    // console.log("🔨 Creating new InstancedMesh object")
     const mesh = new THREE.InstancedMesh(geometry, material, instanceCount)
     mesh.frustumCulled = false
     return mesh
@@ -41,15 +41,15 @@ const ThumbnailMesh = ({
 
   // Track mount/unmount
   useEffect(() => {
-    console.log("🟢 ThumbnailMesh MOUNTED")
+    // console.log("🟢 ThumbnailMesh MOUNTED")
     return () => {
-      console.log("🔴 ThumbnailMesh UNMOUNTED")
+      // console.log("🔴 ThumbnailMesh UNMOUNTED")
     }
   }, [])
 
   // Update geometry when it changes
   useEffect(() => {
-    console.log("Updating geometry reference")
+    // console.log("Updating geometry reference")
     meshObject.geometry = geometry
     meshObject.geometry.computeBoundingBox()
     meshObject.geometry.computeBoundingSphere()
@@ -58,7 +58,7 @@ const ThumbnailMesh = ({
 
   // Update material when it changes
   useEffect(() => {
-    console.log("Updating material reference")
+    // console.log("Updating material reference")
     meshObject.material = material
   }, [material, meshObject])
 
@@ -85,7 +85,7 @@ const ThumbnailMesh = ({
     meshObject.geometry.computeBoundingSphere()
     meshObject.computeBoundingSphere()
 
-    console.log("✅ Updated instance matrices, count:", count)
+    // console.log("✅ Updated instance matrices, count:", count)
   }, [positions, scales, meshObject])
 
   // Direct click handler
@@ -93,7 +93,7 @@ const ThumbnailMesh = ({
     () => (e: any) => {
       e.stopPropagation()
       const index = e.instanceId ?? -1
-      console.log("👆 Thumbnail clicked - instanceId:", index)
+      // console.log("👆 Thumbnail clicked - instanceId:", index)
       if (index >= 0 && index < sortedImages.length && sortedImages[index]) {
         onThumbnailClick(index, sortedImages[index])
       } else {
@@ -103,14 +103,7 @@ const ThumbnailMesh = ({
     [sortedImages, onThumbnailClick]
   )
 
-  const handlePointerDown = useMemo(
-    () => (e: any) => {
-      console.log("👇 PointerDown on thumbnail mesh, instanceId:", e.instanceId)
-    },
-    []
-  )
-
-  return <primitive object={meshObject} onClick={handleClick} onPointerDown={handlePointerDown} />
+  return <primitive object={meshObject} />
 }
 
 export default ThumbnailMesh

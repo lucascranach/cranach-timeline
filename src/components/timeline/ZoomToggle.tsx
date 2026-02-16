@@ -17,7 +17,9 @@ const ToggleContainer = styled.div`
   border: 1px solid rgba(255, 255, 255, 0.1);
   pointer-events: auto;
   cursor: pointer;
-  transition: border-color 0.2s ease, background-color 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease;
 
   &:hover {
     background: rgba(0, 0, 0, 0.6);
@@ -70,11 +72,11 @@ interface ZoomToggleProps {
 
 const ZoomToggle = ({ isEnabled, onToggle }: ZoomToggleProps) => {
   const handleToggle = () => {
-    console.log("Toggle clicked! Current state:", isEnabled, "New state:", !isEnabled)
+    // console.log("Toggle clicked! Current state:", isEnabled, "New state:", !isEnabled)
     onToggle(!isEnabled)
   }
 
-  console.log("ZoomToggle rendered with isEnabled:", isEnabled)
+  // console.log("ZoomToggle rendered with isEnabled:", isEnabled)
 
   return (
     <ToggleContainer onClick={handleToggle}>

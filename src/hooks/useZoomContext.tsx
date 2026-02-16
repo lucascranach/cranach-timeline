@@ -13,12 +13,12 @@ export const ZoomProvider = ({ children }: { children: ReactNode }) => {
   const targetZoom = useRef(0) // target for smooth transition
 
   const handleSetEnableZoomStep = (enabled: boolean) => {
-    console.log("ZoomContext: Setting enableZoomStep to:", enabled)
+    // console.log("ZoomContext: Setting enableZoomStep to:", enabled)
     setEnableZoomStep(enabled)
     targetZoom.current = enabled ? 1 : 0
   }
 
-  console.log("ZoomProvider rendered with enableZoomStep:", enableZoomStep)
+  // console.log("ZoomProvider rendered with enableZoomStep:", enableZoomStep)
 
   return (
     <ZoomContext.Provider value={{ enableZoomStep, setEnableZoomStep: handleSetEnableZoomStep, targetZoom }}>
