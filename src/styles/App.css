@@ -21,7 +21,7 @@ body {
     top: 0;
     left: 0;
     color: #fff;
-    font-family: "Courier New", Courier, monospace;
+    font-family: "IBMPlexSans", sans-serif;
     padding: 0.5rem;
     font-size: 1rem;
     pointer-events: none; 
@@ -36,7 +36,7 @@ body {
     top: 0;
     left: 0;
     color: #fff;
-    font-family: "Courier New", Courier, monospace;
+    font-family: "IBMPlexSans", sans-serif;
     padding: 0.5rem;
     font-size: 1rem;
     pointer-events: none; 

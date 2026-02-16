@@ -40,7 +40,7 @@ const GroupLabel = ({ text, position, color, fontSize = 12, isActive = false }: 
       style={{
         color: textColor,
         fontSize: `${fontSize}px`,
-        fontFamily: "system-ui, sans-serif",
+        fontFamily: "IBMPlexSans, sans-serif",
         fontWeight: 500,
         pointerEvents: "none",
         userSelect: "none",
