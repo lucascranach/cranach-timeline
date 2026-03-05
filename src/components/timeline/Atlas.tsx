@@ -9,7 +9,6 @@ import { useAtlasTransforms } from "@/hooks/useAtlasTransforms"
 import { useZoomContext } from "@/hooks/useZoomContext"
 import { useSelectedEvent } from "@/hooks/useSelectedEventContext"
 import { useZoomAnimation } from "@/hooks/useZoomAnimation"
-import { useKeyboardNavigation } from "@/hooks/useKeyboardNavigation"
 import { useEventAutoSelection } from "@/hooks/useEventAutoSelection"
 import { useEvents } from "@/hooks/useEvents"
 import { useSidebarGallery } from "@/hooks/useSidebarGalleryContext"
@@ -205,13 +204,6 @@ const Atlas = () => {
     onSelectionChange: setSelection,
   })
 
-  // Keyboard navigation
-  useKeyboardNavigation({
-    selection,
-    processedGroups: processedGroupsRef.current,
-    onSelectionChange: setSelection,
-  })
-
   // Track focused year for sidebar
   useFocusedYear({
     yearPositions,
@@ -273,18 +265,6 @@ const Atlas = () => {
     blockAutoSelect(800) // Block auto-selection during manual centering
     centerOnX(ev.startPos)
   }, [selection, centerOnX, blockAutoSelect])
-
-  // Event handlers
-  const handleEventSelect = useCallback(({ group, instance }: { group: string; instance: number }) => {
-    const gi = processedGroupsRef.current.findIndex((g) => g.name === group)
-    if (gi !== -1) {
-      setSelection({ groupIndex: gi, eventIndex: instance, centerOnSelect: true })
-    }
-  }, [])
-
-  const handleClearSelection = useCallback(() => {
-    setSelection(null)
-  }, [])
 
   const handleThumbnailClick = useCallback(
     (index: number, imageData?: AtlasImage) => {
@@ -461,7 +441,6 @@ const Atlas = () => {
                 : null
             }
             selectedYear={selectedEvent?.startYear ?? null}
-            onSelect={handleEventSelect}
             onProcessed={(groups) => {
               processedGroupsRef.current = groups
             }}

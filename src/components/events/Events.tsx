@@ -11,7 +11,6 @@ const Events = ({
   gapBetweenGroups = 0.15,
   selection: externalSelection,
   selectedYear = null,
-  onSelect,
   onHoverChange,
   onProcessed,
 }: EventsProps) => {
@@ -21,13 +20,8 @@ const Events = ({
   // Process event groups into renderable data
   const processedEventGroups = useEventProcessing(eventGroups, yearPositions, gapBetweenGroups, onProcessed)
 
-  // Handle selection and hover states
-  const { selection, hovered, setHovered, handleEventClick } = useEventSelection(
-    externalSelection,
-    processedEventGroups,
-    onSelect,
-    onHoverChange
-  )
+  // Handle selection state
+  const { selection } = useEventSelection(externalSelection, processedEventGroups)
 
   // Pill controls and geometry
   const { pillWidth, pillHeight, pillGeometry } = usePillControls()
@@ -47,12 +41,8 @@ const Events = ({
           pillHeight={pillHeight}
           pillGeometry={pillGeometry}
           selection={selection}
-          hovered={hovered}
           selectedYear={selectedYear}
           focusedYear={focusedYear}
-          onEventClick={handleEventClick}
-          onHoverChange={onHoverChange}
-          setHovered={setHovered}
         />
       ))}
     </group>

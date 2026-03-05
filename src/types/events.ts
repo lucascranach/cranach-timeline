@@ -33,15 +33,6 @@ export interface EventsProps {
   selection?: { group: string; instance: number } | null
   /** Year of the selected event to highlight related events */
   selectedYear?: number | null
-  /** Callback on select (click) */
-  onSelect?: (payload: {
-    group: string
-    instance: number
-    processed: ProcessedEvent
-    groupData: ProcessedEventGroup
-  }) => void
-  /** Optional external hover handler */
-  onHoverChange?: (payload: { group: string; instance: number } | null) => void
   /** Expose processed data */
   onProcessed?: (groups: ProcessedEventGroup[]) => void
 }
@@ -71,10 +62,6 @@ export interface EventGroupRenderProps {
   pillHeight: number
   pillGeometry: THREE.ShapeGeometry
   selection: { group: string; instance: number } | null
-  hovered: { group: string; instance: number } | null
-  onEventClick: (processed: ProcessedEvent, groupData: ProcessedEventGroup, instanceId: number) => void
-  onHoverChange: (payload: { group: string; instance: number } | null) => void
-  setHovered: (payload: { group: string; instance: number } | null) => void
 }
 
 export interface GroupBounds {
@@ -86,9 +73,6 @@ export interface GroupBounds {
 
 export interface EventSelectionState {
   selection: { group: string; instance: number } | null
-  hovered: { group: string; instance: number } | null
-  setHovered: (payload: { group: string; instance: number } | null) => void
-  handleEventClick: (processed: ProcessedEvent, groupData: ProcessedEventGroup, instanceId: number) => void
 }
 
 export interface PillControlsConfig {

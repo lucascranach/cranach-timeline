@@ -14,12 +14,8 @@ interface EventGroupProps {
   pillHeight: number
   pillGeometry: THREE.ShapeGeometry
   selection: { group: string; instance: number } | null
-  hovered: { group: string; instance: number } | null
   selectedYear: number | null
   focusedYear: number | null
-  onEventClick: (processed: any, groupData: ProcessedEventGroup, instanceId: number) => void
-  onHoverChange: (payload: { group: string; instance: number } | null) => void
-  setHovered: React.Dispatch<React.SetStateAction<{ group: string; instance: number } | null>>
 }
 
 const EventGroup = ({
@@ -30,12 +26,8 @@ const EventGroup = ({
   pillHeight,
   pillGeometry,
   selection,
-  hovered,
   selectedYear,
   focusedYear,
-  onEventClick,
-  onHoverChange,
-  setHovered,
 }: EventGroupProps) => {
   const count = group.processedEvents.length
   if (count === 0) return null
@@ -102,12 +94,8 @@ const EventGroup = ({
         pillWidth={pillWidth}
         pillGeometry={pillGeometry}
         selection={selection}
-        hovered={hovered}
         selectedYear={selectedYear}
         focusedYear={focusedYear}
-        onEventClick={onEventClick}
-        onHoverChange={onHoverChange}
-        setHovered={setHovered}
       />
     </group>
   )

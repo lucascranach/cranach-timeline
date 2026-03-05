@@ -10,12 +10,8 @@ interface EventPillProps {
   pillWidth: number
   pillGeometry: THREE.ShapeGeometry
   selection: { group: string; instance: number } | null
-  hovered: { group: string; instance: number } | null
   selectedYear: number | null
   focusedYear: number | null
-  onEventClick: (processed: any, groupData: ProcessedEventGroup, instanceId: number) => void
-  onHoverChange: (payload: { group: string; instance: number } | null) => void
-  setHovered: React.Dispatch<React.SetStateAction<{ group: string; instance: number } | null>>
 }
 
 const EventPill = ({
@@ -24,12 +20,8 @@ const EventPill = ({
   pillWidth,
   pillGeometry,
   selection,
-  hovered,
   selectedYear,
   focusedYear,
-  onEventClick,
-  onHoverChange,
-  setHovered,
 }: EventPillProps) => {
   const count = group.processedEvents.length
   const ref = useRef<THREE.InstancedMesh | null>(null)
@@ -74,9 +66,7 @@ const EventPill = ({
 
     // Animate scales
     for (let i = 0; i < count; i++) {
-      const active =
-        (selection && selection.group === group.name && selection.instance === i) ||
-        (hovered && hovered.group === group.name && hovered.instance === i)
+      const active = selection && selection.group === group.name && selection.instance === i
       const target = active ? ACTIVE_EVENT_SCALE : 1
       const current = scales[i]
       const newScale = THREE.MathUtils.damp(current, target, 6, 1 / 60) // approx ease in/out
@@ -157,22 +147,6 @@ const EventPill = ({
       name={`event-group-${group.name}-instances`}
       ref={ref}
       args={[undefined, undefined, count]}
-      onPointerMove={(e) => {
-        e.stopPropagation()
-        document.body.style.cursor = "auto"
-        const instanceId = e.instanceId
-        if (instanceId !== undefined) {
-          const payload = { group: group.name, instance: instanceId }
-          setHovered(payload)
-          onHoverChange?.(payload)
-        }
-      }}
-      onPointerOut={(e) => {
-        e.stopPropagation()
-        document.body.style.cursor = "auto"
-        setHovered((prev) => (prev && prev.group === group.name ? null : prev))
-        onHoverChange?.(null)
-      }}
       frustumCulled={false}
     >
       <primitive object={pillGeometry} attach="geometry" />
