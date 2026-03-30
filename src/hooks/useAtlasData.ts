@@ -11,6 +11,7 @@ export const useAtlasData = (
   zoomMultiplier: number = 1
 ) => {
   const [atlasData, setAtlasData] = useState<AtlasData | null>(null)
+  const HIDE_THUMBNAILS_FROM_YEAR = 1586
 
   // Define uniform timeline year range (extended earlier if needed)
   const START_YEAR = 1400
@@ -40,42 +41,51 @@ export const useAtlasData = (
       return aSort.localeCompare(bSort)
     })
 
+    // Hide thumbnails from the configured cutoff year onward.
+    const filteredSorted = sorted.filter((image) => {
+      const year = parseInt((image.sorting_number || "").slice(0, 4), 10)
+      return Number.isNaN(year) || year < HIDE_THUMBNAILS_FROM_YEAR
+    })
+
     // Group by year using atlasUtils
-    const grouped = groupResultsByYear(sorted)
+    const grouped = groupResultsByYear(filteredSorted)
     // Uniform year list from START_YEAR..END_YEAR (even if no images)
     const keys = Array.from({ length: END_YEAR - START_YEAR + 1 }, (_, i) => String(START_YEAR + i))
 
     return {
-      sortedImages: sorted,
+      sortedImages: filteredSorted,
       groupedByYear: grouped,
       yearKeys: keys,
     }
-  }, [atlasData])
+  }, [atlasData, HIDE_THUMBNAILS_FROM_YEAR])
 
   // Calculate year positions separately - this can change with zoom/spacing
   // without recreating sortedImages/groupedByYear
   const yearPositions = useMemo(() => {
     // Center positions so REFERENCE_YEAR maps to x = 0
     // When zooming, scale positions relative to the zoom origin (screen center)
-    return yearKeys.reduce((acc, year) => {
-      const yrNum = parseInt(year, 10)
-      const basePosition = (yrNum - REFERENCE_YEAR) * yearSpacing
+    return yearKeys.reduce(
+      (acc, year) => {
+        const yrNum = parseInt(year, 10)
+        const basePosition = (yrNum - REFERENCE_YEAR) * yearSpacing
 
-      // If we have a zoom origin, scale positions relative to it
-      if (zoomOriginX !== null && zoomProgress > 0) {
-        // Calculate what the base spacing would be (unzoomed)
-        const baseSpacing = yearSpacing / (1 + (zoomMultiplier - 1) * zoomProgress)
-        const basePos = (yrNum - REFERENCE_YEAR) * baseSpacing
-        // Scale offset from zoom origin
-        const offsetFromOrigin = basePos - zoomOriginX
-        const currentScale = 1 + (zoomMultiplier - 1) * zoomProgress
-        acc[year] = zoomOriginX + offsetFromOrigin * currentScale
-      } else {
-        acc[year] = basePosition
-      }
+        // If we have a zoom origin, scale positions relative to it
+        if (zoomOriginX !== null && zoomProgress > 0) {
+          // Calculate what the base spacing would be (unzoomed)
+          const baseSpacing = yearSpacing / (1 + (zoomMultiplier - 1) * zoomProgress)
+          const basePos = (yrNum - REFERENCE_YEAR) * baseSpacing
+          // Scale offset from zoom origin
+          const offsetFromOrigin = basePos - zoomOriginX
+          const currentScale = 1 + (zoomMultiplier - 1) * zoomProgress
+          acc[year] = zoomOriginX + offsetFromOrigin * currentScale
+        } else {
+          acc[year] = basePosition
+        }
 
-      return acc
-    }, {} as Record<string, number>)
+        return acc
+      },
+      {} as Record<string, number>
+    )
   }, [yearKeys, yearSpacing, zoomOriginX, zoomProgress, zoomMultiplier])
 
   return {
