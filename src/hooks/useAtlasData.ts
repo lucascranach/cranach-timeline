@@ -14,8 +14,8 @@ export const useAtlasData = (
   const HIDE_THUMBNAILS_FROM_YEAR = 1586
 
   // Define uniform timeline year range (extended earlier if needed)
-  const START_YEAR = 1400
-  const END_YEAR = 1950
+  const START_YEAR = 1460
+  const END_YEAR = 1600
   // Year that should appear at x = 0
   const REFERENCE_YEAR = 1507
 

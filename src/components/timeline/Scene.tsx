@@ -34,11 +34,11 @@ const TimelineControls = () => {
     // Kept small because we apply inertia in the render loop.
     const SCROLL_SPEED = 0.0025
 
-    // Timeline boundaries - years 1400 to 1950
+    // Timeline boundaries - years 1400 to 1600
     // Assuming REFERENCE_YEAR = 1507 at x = 0, and typical yearSpacing ~= 2
     // We'll use approximate bounds and clamp camera position
     const MIN_YEAR = 1400
-    const MAX_YEAR = 1950
+    const MAX_YEAR = 1600
     const REFERENCE_YEAR = 1507
     const YEAR_SPACING = 2 // approximate, adjust if needed
     const MIN_X = (MIN_YEAR - REFERENCE_YEAR) * YEAR_SPACING
@@ -118,7 +118,7 @@ const TimelineControls = () => {
     if (!controls) return
 
     const MIN_YEAR = 1400
-    const MAX_YEAR = 1950
+    const MAX_YEAR = 1600
     const REFERENCE_YEAR = 1507
     const YEAR_SPACING = 2
     const MIN_X = (MIN_YEAR - REFERENCE_YEAR) * YEAR_SPACING
