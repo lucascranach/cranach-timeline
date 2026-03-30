@@ -61,6 +61,9 @@ export function AppSidebar() {
 
   return (
     <Sidebar side="right">
+      {/* Orange accent line at the top */}
+      <div className="absolute top-0 left-0 right-0 h-[3px] z-50" style={{ backgroundColor: '#feb701' }} />
+      
       <SidebarHeader>
         <div className="px-6 py-5 border-b border-white/5">
           <div className="flex items-center justify-start">
