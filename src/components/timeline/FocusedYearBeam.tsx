@@ -23,8 +23,8 @@ const FocusedYearBeam = ({ yearPositions }: FocusedYearBeamProps) => {
 
     if (xPosition !== undefined) {
       beamRef.current.position.x = xPosition
-      // Keep beam centered vertically with the camera
-      beamRef.current.position.y = camera.position.y
+      // Keep beam fixed vertically at y=0
+      beamRef.current.position.y = 0
     }
   })
 
@@ -32,7 +32,7 @@ const FocusedYearBeam = ({ yearPositions }: FocusedYearBeamProps) => {
 
   return (
     <mesh ref={beamRef} position={[0, 0, -1]}>
-      <planeGeometry args={[0.3, 100]} />
+      <planeGeometry args={[0.3, 2000]} />
       <meshBasicMaterial color="#feb701" transparent opacity={0.15} depthTest={false} depthWrite={false} />
     </mesh>
   )
