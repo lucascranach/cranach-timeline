@@ -105,9 +105,40 @@ const TimelineControls = () => {
     }
     window.addEventListener("timeline-center", handleCenterEvent as any)
 
+    // Keyboard navigation for timeline
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // avoid triggering while typing in inputs/textareas
+      const target = e.target as HTMLElement
+      const tag = target?.tagName
+      if (tag === "INPUT" || tag === "TEXTAREA" || target?.isContentEditable) return
+
+      if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+        // Timeline horizontal navigation with arrow keys
+        e.preventDefault()
+
+        // Bootstrap target on first interaction
+        if (targetXRef.current === null) targetXRef.current = camera.position.x
+
+        // Arrow key navigation: each press adds velocity
+        const keyScrollSpeed = 30 // units per key press
+        const direction = e.key === "ArrowRight" ? 1 : -1
+        wheelVelocityRef.current += direction * keyScrollSpeed * SCROLL_SPEED
+
+        // Clamp velocity
+        const MAX_V = 1.75
+        wheelVelocityRef.current = Math.max(-MAX_V, Math.min(MAX_V, wheelVelocityRef.current))
+
+        // Lock Y axes immediately to prevent drift
+        camera.position.y = initialY
+        controls.target.y = initialTargetY
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+
     return () => {
       canvas.removeEventListener("wheel", handleWheel as any)
       window.removeEventListener("timeline-center", handleCenterEvent as any)
+      window.removeEventListener("keydown", handleKeyDown)
       if (animId) cancelAnimationFrame(animId)
     }
   }, [gl, camera])
@@ -220,11 +251,12 @@ const Scene = () => {
     }
 
     const handleKey = (e: KeyboardEvent) => {
+      // avoid triggering while typing in inputs/textareas
+      const target = e.target as HTMLElement
+      const tag = target?.tagName
+      if (tag === "INPUT" || tag === "TEXTAREA" || target?.isContentEditable) return
+
       if (e.key === "f" || e.key === "F") {
-        // avoid triggering while typing in inputs/textareas
-        const target = e.target as HTMLElement
-        const tag = target?.tagName
-        if (tag === "INPUT" || tag === "TEXTAREA" || target?.isContentEditable) return
         toggleFullscreen()
       }
     }
