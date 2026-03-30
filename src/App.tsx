@@ -33,6 +33,7 @@ const Title = styled.h1`
   pointer-events: none;
   opacity: 0.8f;
   letter-spacing: 0.02em;
+  white-space: nowrap;
 `
 
 const AppContent = () => {
@@ -40,10 +41,7 @@ const AppContent = () => {
 
   return (
     <>
-      <Title>
-        Lucas Cranach <br />
-        Timeline
-      </Title>
+      <Title>Lucas Cranach Timeline</Title>
       <ThemeToggle />
       <ZoomToggle isEnabled={enableZoomStep} onToggle={setEnableZoomStep} />
       <ImagePrefetchIndicator />
