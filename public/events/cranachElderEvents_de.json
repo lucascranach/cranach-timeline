@@ -4,16 +4,20 @@
     "description": "Geboren in Kronach als Sohn eines Malers."
   },
   {
-    "startDate": "1502-01-01",
-    "description": "Arbeit in Wien."
+    "startDate": "1499-01-01",
+    "description": "Möglicher Aufenthalt in Nürnberg (in der Werkstatt Michael Wolgemuts oder Albrecht Dürers?)."
+  },
+  {
+    "startDate": "1501-01-01",
+    "description": "Arbeit in Wien im Kreis der Humanisten um Conrad Celtis."
   },
   {
     "startDate": "1505-01-01",
-    "description": "Berufung zum Hofmaler nach Wittenberg durch den sächsischen Kurfürsten Friedrich III., den Weisen."
+    "description": "Berufung zum Hofmaler nach Wittenberg durch den sächsischen Kurfürsten Friedrich III., genannt der Weise."
   },
   {
     "startDate": "1508-01-01",
-    "description": "Verleihung eines Wappenbriefes in Nürnberg: geflügelte Schlange mit Rubinring im Maul."
+    "description": "Verleihung eines Wappenbriefes durch Friedrich III. in Nürnberg: gekrönte Schlange mit Fledermausflügeln und Rubinring im Maul."
   },
   {
     "startDate": "1508-06-01",
@@ -21,14 +25,14 @@
   },
   {
     "startDate": "1512-01-01",
-    "description": "Erwerb zweier benachbarter Häuser am Wittenberger Markt."
+    "description": "Erwerb zweier benachbarter Häuser am Wittenberger Markt (heute Nr. 3 und 4), nachfolgend Umzug der Werkstatt vom Schloss in die Stadt."
   },
   {
     "startDate": "1513-01-01",
     "description": "Hochzeit mit Barbara Brengbier und Geburt des Sohnes Hans."
   },
   {
-    "startDate": "1515-01-01",
+    "startDate": "1515-10-04",
     "description": "Geburt des Sohnes Lucas Cranach der Jüngere."
   },
   {
@@ -53,11 +57,11 @@
   },
   {
     "startDate": "1523-06-01",
-    "description": "Betreibung einer Buchdruckerei mit Christian Döring."
+    "description": "Betrieb einer Buchdruckerei mit Christian Döring (bis 1525/1526)."
   },
   {
     "startDate": "1524-01-01",
-    "description": "Begleitung Friedrichs III., des Weisen, zum Reichstag nach Nürnberg."
+    "description": "Begleitung Friedrichs III., des Weisen, zum Reichstag nach Nürnberg, dort Begegnung mit Albrecht Dürer."
   },
   {
     "startDate": "1525-01-01",
@@ -65,12 +69,21 @@
   },
   {
     "startDate": "1525-10-01",
-    "description": "Arbeit für den neuen Kurfürsten Johann, den Beständigen."
+    "description": "Arbeiten für den neuen Kurfürsten Johann, genannt der Beständige."
   },
   {
     "startDate": "1527-01-01",
     "description": "Geburt der Tochter Anna."
   },
+  {
+    "startDate": "1528-01-01",
+    "description": "Laut Steuerabrechnung ist Cranach nach dem kursächsischen Kanzler Brück, dessen Sohn Cranachs Tochter Barbara 1541 heiraten wird, der reichste Bürger Wittenbergs"
+  },
+  {
+    "startDate": "1532-01-01",
+    "description": "Arbeiten für den neuen Kurfürsten Johann Friedrich I., genannt der Großmütige"
+  },
+
   {
     "startDate": "1537-01-01",
     "description": "Aufnahme des Amtes als Bürgermeister von Wittenberg."
@@ -81,7 +94,7 @@
   },
   {
     "startDate": "1550-01-01",
-    "description": "Aufenthalt in Augsburg und Innsbruck als Hofmaler des im EstartDateil lebenden Johann Friedrich I."
+    "description": "Aufenthalt in Augsburg und Innsbruck als Hofmaler des gefangenen Dienstherrn Johann Friedrich I.; Begegnung mit Tizian."
   },
   {
     "startDate": "1552-01-01",
