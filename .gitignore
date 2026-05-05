@@ -31,3 +31,5 @@ dist-ssr
 
 frontend/public/elevation/DSM-data.glb
 frontend/public/elevation/DTM-data.glb
+
+rsync-prod.sh

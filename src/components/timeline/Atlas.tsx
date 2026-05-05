@@ -188,6 +188,7 @@ const Atlas = () => {
   // Selection state management
   const [selection, setSelection] = useState<SelectionState | null>(null)
   const processedGroupsRef = useRef<ProcessedEventGroup[]>([])
+  const [processedGroupsForSidebar, setProcessedGroupsForSidebar] = useState<ProcessedEventGroup[]>([])
   const [selectedColumnInfo, setSelectedColumnInfo] = useState<{ year: string; column: number } | null>(null)
 
   // Camera centering helper
@@ -208,7 +209,7 @@ const Atlas = () => {
   useFocusedYear({
     yearPositions,
     groupedByYear,
-    allEventGroups: processedGroupsRef.current,
+    allEventGroups: processedGroupsForSidebar,
   })
 
   // Update selected event context when selection changes
@@ -443,6 +444,7 @@ const Atlas = () => {
             selectedYear={selectedEvent?.startYear ?? null}
             onProcessed={(groups) => {
               processedGroupsRef.current = groups
+              setProcessedGroupsForSidebar(groups)
             }}
           />
         </group>

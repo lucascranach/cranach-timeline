@@ -8,7 +8,8 @@
     "build": "vite build",
     "build:check": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy-prod": "npm run build && sh rsync-prod.sh"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",
