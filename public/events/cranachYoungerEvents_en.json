@@ -13,11 +13,15 @@
   },
   {
     "startDate": "1536-01-01",
-    "description": "Until 1537 - Mentioned in accounts for work in the Torgau castle."
+    "description": "Mentioned in accounts for work in the Torgau castle (until 1537)."
+  },
+  {
+    "startDate": "1540-01-01",
+    "description": "Death of his mother Babara"
   },
   {
     "startDate": "1541-01-01",
-    "description": "Death of his mother Babara. Marriage to Barbara Brück, daughter of the Saxon chancellor Dr. Gregor Brück, from this marriage four children."
+    "description": "Marriage to Barbara Brück, daughter of the Saxon chancellor Dr. Gregor Brück, from this marriage four children: Lucas, Barbara, Johannes und Christian."
   },
   {
     "startDate": "1549-01-01",
@@ -29,7 +33,7 @@
   },
   {
     "startDate": "1551-01-01",
-    "description": "Large-format Hercules paintings for the Dresden Palace. Marriage with Magdalena Schurff, daughter of the professor of medicine Augustin Schurff and niece of Philipp Melanchthon, five children from this marriage."
+    "description": "Large-format Hercules paintings for the Dresden Palace. Marriage with Magdalena Schurff, daughter of the professor of medicine Augustin Schurff and niece of Philipp Melanchthon, five children from this marriage: Magdalena, Augustin, Agnes, Christoph und Elisabeth."
   },
   {
     "startDate": "1553-01-01",
@@ -44,6 +48,10 @@
     "description": "Epitaph for Duke Johann Friedrich of Saxony and Sibylle of Cleve, Weimar City Church of St. Peter and Paul Office of the chamberlain in Wittenberg"
   },
   {
+    "startDate": "1556-01-01",
+    "description": "Purchase of a farm in Eutzsch"
+  },
+  {
     "startDate": "1558-01-01",
     "description": "Epitaph for Michael Meyenburg, Nordhausen, St. Blasii."
   },
@@ -53,15 +61,27 @@
   },
   {
     "startDate": "1567-01-01",
-    "description": "Grumbach's Handel, appointment of Cranach for his widowed sister Barbara for the partial return of her husband's confiscated possessions."
+    "description": "Grumbach's Handel, appointment of Cranach for his widowed sister Barbara for the partial return of her husband's confiscated possessions. Until 1573, a dispute with the city of Wittenberg over the right to sell wine"
   },
   {
     "startDate": "1568-01-01",
-    "description": "Enrolled at the University of Wittenberg."
+    "description": "Entry as 'Consul' in the matriculation register of the University of Wittenberg."
+  },
+   {
+    "startDate": "1569-01-01",
+    "description": "Renewal of the wine-serving privilege for Cranach the Younger"
+  },
+  {
+    "startDate": "1571-01-01",
+    "description": "Acquisition of shares in a tin mine in Annaberg-Buchholz"
+  },
+  {
+    "startDate": "1583-01-01",
+    "description": "Acquisition of the Wachsdorf manor"
   },
   {
     "startDate": "1586-01-25",
-    "description": "Died in wittenberg."
+    "description": "Died in Wittenberg."
   },
   {
     "startDate": "1586-01-27",
